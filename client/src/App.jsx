@@ -15,6 +15,7 @@ import CreateEvent from './pages/CreateEvent';
 import MyEvents from './pages/MyEvents';
 import EventList from './pages/EventList';
 import EventDetail from './pages/EventDetail';
+import ContactForm from './components/ContactForm';
 
 // Home landing page component
 const Home = () => {
@@ -95,6 +96,10 @@ function App() {
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* FR-05 Contact Validation Route */}
+            <Route path="/checkout/contact" element={<ContactForm />} />
+            <Route path="/checkout/:ticketId/contact" element={<ContactForm />} />
 
             {/* Role-Specific Dashboards */}
             <Route
