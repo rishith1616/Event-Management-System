@@ -1,40 +1,51 @@
 /**
  * middleware/auth.js — JWT verification middleware
- * Extracts and verifies bearer token from Authorization header,
- * attaching the authenticated user payload to req.user.
+ * Authenticates API requests by validating the Bearer token in the Authorization header.
+ * Attaches the authenticated user object to req.user for downstream middleware/handlers.
  */
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-const auth = (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+export const protect = async (req, res, next) => {
+  let token;
+
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'change-this-to-a-secure-secret'
+      );
+
+      req.user = await User.findById(decoded.id).select('-password');
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized, user not found',
+        });
+      }
+
+      return next();
+    } catch (error) {
+      console.error('JWT verification error:', error.message);
       return res.status(401).json({
         success: false,
-        message: 'Access denied. No token provided.',
+        message: 'Not authorized, token failed or expired',
       });
     }
+  }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'jwt_secret_dev_key'
-    );
-
-    // Standardize user object structure on req.user
-    const userData = decoded.user || decoded;
-    req.user = {
-      ...userData,
-      id: userData.id || userData._id,
-    };
-
-    next();
-  } catch (error) {
+  if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Invalid or expired token.',
+      message: 'Not authorized, no token provided',
     });
   }
 };
 
-export default auth;
+export default protect;

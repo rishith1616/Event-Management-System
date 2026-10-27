@@ -1,152 +1,148 @@
 /**
- * App.jsx — Root component with route definitions
- * Feature branches will add their specific routes here.
+ * App.jsx — Root component with route definitions and global context
+ * Configures authentication state provider, navigation bar, and role-protected routes.
  */
 import { Routes, Route, Link } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Navbar from './components/Navbar';
+import ProtectedRoute from './components/ProtectedRoute';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import OrganizerDashboard from './pages/OrganizerDashboard';
+import AttendeeDashboard from './pages/AttendeeDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 import CreateEvent from './pages/CreateEvent';
 import MyEvents from './pages/MyEvents';
 
-/**
- * OrganizerRoute — Protects organizer-specific views
- * Blocks attendees from accessing event-creation and management tools.
- */
-function OrganizerRoute({ children }) {
-  const userStr = localStorage.getItem('user');
-  const role = localStorage.getItem('role');
-  let userRole = role;
+// Home landing page component
+const Home = () => {
+  const { user, isAuthenticated } = useAuth();
 
-  if (!userRole && userStr) {
-    try {
-      userRole = JSON.parse(userStr).role;
-    } catch (err) {
-      userRole = null;
+  const getDashboardPath = () => {
+    if (!user) return '/login';
+    switch (user.role) {
+      case 'organizer':
+        return '/dashboard/organizer';
+      case 'admin':
+        return '/dashboard/admin';
+      case 'attendee':
+      default:
+        return '/dashboard/attendee';
     }
-  }
+  };
 
-  if (userRole && userRole !== 'organizer' && userRole !== 'admin') {
-    return (
-      <div className="container" style={{ padding: '2rem 1rem' }}>
-        <div className="card" style={{ borderLeft: '4px solid #dc2626' }}>
-          <h2>Access Denied</h2>
-          <p style={{ marginTop: '0.5rem', color: '#6b7280' }}>
-            This page is restricted to Organizers. Your current role is <strong>{userRole}</strong>.
+  return (
+    <div className="container" style={{ textAlign: 'center', padding: '4rem 1rem' }}>
+      <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#1e293b' }}>
+        Event Management System
+      </h1>
+      <p style={{ fontSize: '1.2rem', color: '#64748b', maxWidth: '600px', margin: '0 auto 2rem' }}>
+        Plan, host, and discover events seamlessly. Register as an Organizer to create events, or as an Attendee to explore and purchase tickets.
+      </p>
+
+      {isAuthenticated ? (
+        <div>
+          <p style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
+            Logged in as <strong>{user?.name}</strong> ({user?.role})
           </p>
-          <div style={{ marginTop: '1rem' }}>
-            <Link to="/" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-              Back to Home
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <Link to={getDashboardPath()} className="btn btn-primary">
+              Go to Your Dashboard
             </Link>
+            {user?.role === 'organizer' && (
+              <>
+                <Link to="/events/my-events" className="btn btn-primary" style={{ background: '#0284c7' }}>
+                  My Events
+                </Link>
+                <Link to="/events/create" className="btn btn-success">
+                  + Create Event
+                </Link>
+              </>
+            )}
           </div>
         </div>
-      </div>
-    );
-  }
-
-  return children;
-}
+      ) : (
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+          <Link to="/register" className="btn btn-primary">
+            Get Started
+          </Link>
+          <Link to="/login" className="btn" style={{ border: '1px solid #d1d5db', background: '#fff' }}>
+            Sign In
+          </Link>
+        </div>
+      )}
+    </div>
+  );
+};
 
 function App() {
   return (
-    <div className="app">
-      <header
-        style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e5e7eb',
-          padding: '0.75rem 0',
-          marginBottom: '1rem',
-        }}
-      >
-        <div
-          className="container"
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Link
-            to="/"
-            style={{
-              textDecoration: 'none',
-              color: '#111827',
-              fontSize: '1.25rem',
-              fontWeight: 700,
-            }}
-          >
-            Event Management System
-          </Link>
-          <nav style={{ display: 'flex', gap: '1rem' }}>
-            <Link
-              to="/events/my-events"
-              style={{
-                textDecoration: 'none',
-                color: '#4b5563',
-                fontWeight: 500,
-              }}
-            >
-              My Events
-            </Link>
-            <Link
-              to="/events/create"
-              style={{
-                textDecoration: 'none',
-                color: '#4f46e5',
-                fontWeight: 500,
-              }}
-            >
-              + Create Event
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <AuthProvider>
+      <div className="app">
+        <Navbar />
+        <main>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
 
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <div className="container" style={{ padding: '2rem 1rem' }}>
-              <h1>Event Management System</h1>
-              <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-                Welcome to the university event management portal.
-              </p>
-              <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem' }}>
-                <Link to="/events/my-events" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-                  Organizer Dashboard
-                </Link>
-                <Link to="/events/create" className="btn btn-success" style={{ textDecoration: 'none' }}>
-                  Create Event
-                </Link>
-              </div>
-            </div>
-          }
-        />
+            {/* Role-Specific Dashboards */}
+            <Route
+              path="/dashboard/organizer"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <OrganizerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/attendee"
+              element={
+                <ProtectedRoute roles={['attendee']}>
+                  <AttendeeDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/admin"
+              element={
+                <ProtectedRoute roles={['admin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
 
-        {/* FR-02 Organizer Routes */}
-        <Route
-          path="/events/create"
-          element={
-            <OrganizerRoute>
-              <CreateEvent />
-            </OrganizerRoute>
-          }
-        />
-        <Route
-          path="/events/edit/:id"
-          element={
-            <OrganizerRoute>
-              <CreateEvent />
-            </OrganizerRoute>
-          }
-        />
-        <Route
-          path="/events/my-events"
-          element={
-            <OrganizerRoute>
-              <MyEvents />
-            </OrganizerRoute>
-          }
-        />
-      </Routes>
-    </div>
+            {/* FR-02 Organizer Event Management */}
+            <Route
+              path="/events/create"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/edit/:id"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/my-events"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <MyEvents />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route path="*" element={<Home />} />
+          </Routes>
+        </main>
+      </div>
+    </AuthProvider>
   );
 }
 

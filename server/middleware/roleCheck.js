@@ -1,25 +1,23 @@
 /**
- * middleware/roleCheck.js — Role-based access control middleware
- * Verifies that the authenticated user possesses one of the allowed roles.
+ * middleware/roleCheck.js — Role authorization middleware
+ * Factory middleware to restrict access to specific user roles (e.g. organizer, admin, attendee).
  */
-const roleCheck = (...allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user || !req.user.role) {
-      return res.status(401).json({
-        success: false,
-        message: 'Unauthorized: User role not determined.',
-      });
-    }
 
-    if (!allowedRoles.includes(req.user.role)) {
+/**
+ * Authorize specified roles
+ * @param  {...string} roles - Allowed user roles
+ * @returns {Function} Express middleware function
+ */
+export const authorize = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.role)) {
       return res.status(403).json({
         success: false,
-        message: `Forbidden: Access denied for role '${req.user.role}'`,
+        message: `User role '${req.user ? req.user.role : 'unauthenticated'}' is not authorized to access this route`,
       });
     }
-
     next();
   };
 };
 
-export default roleCheck;
+export default authorize;

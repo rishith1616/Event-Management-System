@@ -1,6 +1,6 @@
 /**
- * models/User.js — User model schema for authentication and role management
- * Defines User schema with support for attendee, organizer, and admin roles.
+ * models/User.js — User schema and model for MongoDB
+ * Defines the user attributes, roles, and schema constraints for authentication and authorization.
  */
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
@@ -8,23 +8,31 @@ import bcrypt from 'bcryptjs';
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Name is required'],
+    required: [true, 'Please provide a name'],
     trim: true,
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
+    required: [true, 'Please provide an email address'],
     unique: true,
     lowercase: true,
     trim: true,
+    match: [
+      /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/,
+      'Please provide a valid email address',
+    ],
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: [true, 'Please provide a password'],
+    minlength: [6, 'Password must be at least 6 characters'],
   },
   role: {
     type: String,
-    enum: ['attendee', 'organizer', 'admin'],
+    enum: {
+      values: ['attendee', 'organizer', 'admin'],
+      message: '{VALUE} is not a valid role',
+    },
     default: 'attendee',
   },
   createdAt: {
@@ -33,21 +41,13 @@ const userSchema = new mongoose.Schema({
   },
 });
 
-// Hash password before saving if modified
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-  try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error);
-  }
-});
-
-// Compare password helper
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return bcrypt.compare(candidatePassword, this.password);
+/**
+ * Compare entered password with hashed password in database
+ * @param {string} enteredPassword - Password entered by user
+ * @returns {Promise<boolean>} True if match, false otherwise
+ */
+userSchema.methods.matchPassword = async function (enteredPassword) {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User = mongoose.model('User', userSchema);
