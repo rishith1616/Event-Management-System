@@ -36,8 +36,21 @@ const Navbar = () => {
           Event Management System
         </Link>
         <div className="navbar-links">
+          <Link to="/events" className="nav-link" style={{ fontWeight: 600, color: '#4f46e5' }}>
+            Browse Events
+          </Link>
           {isAuthenticated ? (
             <>
+              {user?.role === 'organizer' && (
+                <>
+                  <Link to="/events/my-events" className="nav-link">
+                    My Events
+                  </Link>
+                  <Link to="/events/create" className="btn btn-success btn-sm" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
+                    + Create Event
+                  </Link>
+                </>
+              )}
               <span className="navbar-user">
                 {user?.name} ({user?.role})
               </span>
@@ -48,6 +61,7 @@ const Navbar = () => {
                 type="button"
                 onClick={handleLogout}
                 className="btn btn-danger btn-sm"
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}
               >
                 Logout
               </button>
@@ -57,7 +71,7 @@ const Navbar = () => {
               <Link to="/login" className="nav-link">
                 Login
               </Link>
-              <Link to="/register" className="btn btn-primary btn-sm">
+              <Link to="/register" className="btn btn-primary btn-sm" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
                 Register
               </Link>
             </>
