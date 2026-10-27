@@ -6,6 +6,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import paymentRoutes from './routes/payments.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -22,11 +23,11 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── Route placeholders (mounted by feature branches) ─────────────
+// ── Routes ───────────────────────────────────────────────────────
 // app.use('/api/auth',     authRoutes);
 // app.use('/api/events',   eventRoutes);
 // app.use('/api/tickets',  ticketRoutes);
-// app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', paymentRoutes);
 // app.use('/api/admin',    adminRoutes);
 
 // ── Error Handler ────────────────────────────────────────────────
