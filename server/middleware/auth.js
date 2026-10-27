@@ -56,7 +56,7 @@ export const protect = async (req, res, next) => {
   if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Not authorized, no token provided',
+      message: 'No authorization token provided',
     });
   }
 };
@@ -71,7 +71,7 @@ export const admin = (req, res, next) => {
   if (!req.user || req.user.role !== 'admin') {
     return res.status(403).json({
       success: false,
-      message: 'Access restricted to administrators',
+      message: 'Administrator privileges required',
     });
   }
   next();
