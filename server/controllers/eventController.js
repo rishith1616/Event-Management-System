@@ -1,113 +1,108 @@
 /**
- * controllers/eventController.js — Event controller for public browsing and filtering
- * Handles querying active published events with search, category/date filters,
- * pagination, and retrieving individual event details.
+ * controllers/eventController.js — Event controller functions
+ * Handles event creation, draft updates, publishing, and organizer listings.
  */
-import mongoose from 'mongoose';
 import Event from '../models/Event.js';
 
-// Helper to escape regex special characters
-const escapeRegex = (string) => string.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-
 /**
- * @desc    Get published, active events with filtering, search, sorting, and pagination
- * @route   GET /api/events
- * @access  Public
+ * @desc    Create a new event (draft)
+ * @route   POST /api/events
+ * @access  Private (Organizer)
  */
-export const getEvents = async (req, res, next) => {
+export const createEvent = async (req, res, next) => {
   try {
-    const {
-      category,
-      startDate,
-      endDate,
-      search,
-      sort,
-      page = 1,
-      limit = 12,
-    } = req.query;
+    const { title, description, date, time, venue, capacity, price, category } = req.body;
 
-    // Base filter: Only published events occurring today or in the future
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const query = {
-      status: 'published',
-      date: { $gte: today },
-    };
-
-    // Category filter
-    if (category && category.trim() !== '' && category.toLowerCase() !== 'all') {
-      query.category = new RegExp(`^${escapeRegex(category.trim())}$`, 'i');
+    // Validate required title
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event title is required',
+      });
     }
 
-    // Date range filter
-    if (startDate) {
-      const parsedStart = new Date(startDate);
-      if (!isNaN(parsedStart.getTime())) {
-        // Ensure date does not bypass the active/future constraint
-        const effectiveStart = parsedStart > today ? parsedStart : today;
-        query.date.$gte = effectiveStart;
-      }
+    // Validate date (must be provided and strictly in the future)
+    if (!date) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event date is required',
+      });
+    }
+    const eventDate = new Date(date);
+    if (isNaN(eventDate.getTime()) || eventDate <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event date must be in the future',
+      });
     }
 
-    if (endDate) {
-      const parsedEnd = new Date(endDate);
-      if (!isNaN(parsedEnd.getTime())) {
-        parsedEnd.setHours(23, 59, 59, 999);
-        query.date.$lte = parsedEnd;
-      }
+    // Validate time
+    if (!time || !time.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Event time is required',
+      });
     }
 
-    // Text search on title and description (case-insensitive regex)
-    if (search && search.trim() !== '') {
-      const sanitizedSearch = escapeRegex(search.trim());
-      const searchRegex = new RegExp(sanitizedSearch, 'i');
-      query.$or = [
-        { title: searchRegex },
-        { description: searchRegex },
-      ];
+    // Validate venue
+    if (!venue || !venue.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Venue is required',
+      });
     }
 
-    // Sorting
-    let sortOption = { date: 1, time: 1 };
-    if (sort === 'price') {
-      sortOption = { price: 1, date: 1 };
-    } else if (sort === 'price-desc') {
-      sortOption = { price: -1, date: 1 };
-    } else if (sort === 'title') {
-      sortOption = { title: 1 };
-    } else if (sort === 'title-desc') {
-      sortOption = { title: -1 };
-    } else if (sort === 'date-desc') {
-      sortOption = { date: -1, time: -1 };
-    } else {
-      // Default: sort by date ascending (soonest event first)
-      sortOption = { date: 1, time: 1 };
+    // Validate capacity (explicit requirement: cannot create/publish without capacity)
+    if (capacity === undefined || capacity === null || capacity === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Capacity limit is required',
+      });
+    }
+    const parsedCapacity = Number(capacity);
+    if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Capacity limit is required and must be greater than 0',
+      });
     }
 
-    // Pagination
-    const pageNum = Math.max(1, parseInt(page, 10) || 1);
-    const limitNum = Math.max(1, Math.min(100, parseInt(limit, 10) || 12));
-    const skip = (pageNum - 1) * limitNum;
+    // Validate price
+    if (price === undefined || price === null || price === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'Price is required',
+      });
+    }
+    const parsedPrice = Number(price);
+    if (isNaN(parsedPrice) || parsedPrice < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Price must be a non-negative number',
+      });
+    }
 
-    const [total, events] = await Promise.all([
-      Event.countDocuments(query),
-      Event.find(query)
-        .sort(sortOption)
-        .skip(skip)
-        .limit(limitNum)
-        .populate('organizer', 'name email')
-        .lean(),
-    ]);
+    // Create event with status 'draft' and current organizer
+    const event = new Event({
+      title: title.trim(),
+      description: description ? description.trim() : '',
+      date: eventDate,
+      time: time.trim(),
+      venue: venue.trim(),
+      capacity: parsedCapacity,
+      availableTickets: parsedCapacity,
+      price: parsedPrice,
+      category: category || 'other',
+      status: 'draft',
+      organizer: req.user.id,
+    });
 
-    res.status(200).json({
+    await event.save();
+
+    return res.status(201).json({
       success: true,
-      count: events.length,
-      total,
-      totalPages: Math.ceil(total / limitNum) || 1,
-      currentPage: pageNum,
-      limit: limitNum,
-      events,
+      message: 'Event created successfully as draft',
+      event,
     });
   } catch (error) {
     next(error);
@@ -115,24 +110,14 @@ export const getEvents = async (req, res, next) => {
 };
 
 /**
- * @desc    Get single event by ID (only if published and active)
- * @route   GET /api/events/:id
- * @access  Public
+ * @desc    Update existing event (must be owner)
+ * @route   PUT /api/events/:id
+ * @access  Private (Organizer)
  */
-export const getEventById = async (req, res, next) => {
+export const updateEvent = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(404).json({
-        success: false,
-        message: 'Event not found',
-      });
-    }
-
-    const event = await Event.findById(id)
-      .populate('organizer', 'name email')
-      .lean();
+    const event = await Event.findById(id);
 
     if (!event) {
       return res.status(404).json({
@@ -141,25 +126,220 @@ export const getEventById = async (req, res, next) => {
       });
     }
 
-    // Exclude unpublished, canceled, or suspended events
-    if (event.status !== 'published') {
-      return res.status(404).json({
+    // Check ownership
+    if (event.organizer.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
         success: false,
-        message: 'This event is currently unavailable or has been canceled',
+        message: 'Not authorized to update this event',
       });
     }
 
-    // Exclude past events
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (new Date(event.date) < today) {
+    const { title, description, date, time, venue, capacity, price, category } = req.body;
+
+    if (title !== undefined) {
+      if (!title.trim()) {
+        return res.status(400).json({ success: false, message: 'Event title cannot be empty' });
+      }
+      event.title = title.trim();
+    }
+
+    if (description !== undefined) {
+      event.description = description.trim();
+    }
+
+    if (date !== undefined) {
+      const eventDate = new Date(date);
+      if (isNaN(eventDate.getTime()) || eventDate <= new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Event date must be in the future',
+        });
+      }
+      event.date = eventDate;
+    }
+
+    if (time !== undefined) {
+      if (!time.trim()) {
+        return res.status(400).json({ success: false, message: 'Event time cannot be empty' });
+      }
+      event.time = time.trim();
+    }
+
+    if (venue !== undefined) {
+      if (!venue.trim()) {
+        return res.status(400).json({ success: false, message: 'Venue cannot be empty' });
+      }
+      event.venue = venue.trim();
+    }
+
+    if (capacity !== undefined) {
+      const parsedCapacity = Number(capacity);
+      if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Capacity limit is required and must be greater than 0',
+        });
+      }
+      const ticketsSold = event.capacity - (event.availableTickets ?? event.capacity);
+      if (parsedCapacity < ticketsSold) {
+        return res.status(400).json({
+          success: false,
+          message: `Capacity cannot be lower than tickets already sold (${ticketsSold})`,
+        });
+      }
+      event.availableTickets = parsedCapacity - ticketsSold;
+      event.capacity = parsedCapacity;
+    }
+
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (isNaN(parsedPrice) || parsedPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Price must be a non-negative number',
+        });
+      }
+      event.price = parsedPrice;
+    }
+
+    if (category !== undefined) {
+      event.category = category;
+    }
+
+    await event.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Event updated successfully',
+      event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Publish an event (validate future date and capacity > 0)
+ * @route   PATCH /api/events/:id/publish
+ * @access  Private (Organizer)
+ */
+export const publishEvent = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const event = await Event.findById(id);
+
+    if (!event) {
       return res.status(404).json({
         success: false,
-        message: 'This event has already passed',
+        message: 'Event not found',
       });
     }
 
-    res.status(200).json({
+    // Check ownership
+    if (event.organizer.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to publish this event',
+      });
+    }
+
+    // Validate capacity
+    if (!event.capacity || event.capacity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Capacity limit is required and must be greater than 0',
+      });
+    }
+
+    // Validate future date
+    if (!event.date || new Date(event.date) <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot publish event with a past date. Event date must be in the future',
+      });
+    }
+
+    // Validate essential required details
+    if (!event.title || !event.venue || !event.time) {
+      return res.status(400).json({
+        success: false,
+        message: 'Title, venue, and time are required before publishing',
+      });
+    }
+
+    // Set published status and set availableTickets to capacity
+    event.status = 'published';
+    event.availableTickets = event.capacity;
+
+    await event.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Event published successfully',
+      event,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all events created by logged-in organizer
+ * @route   GET /api/events/my-events
+ * @access  Private (Organizer)
+ */
+export const getMyEvents = async (req, res, next) => {
+  try {
+    const events = await Event.find({ organizer: req.user.id }).sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: events.length,
+      events,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all published events for public listing
+ * @route   GET /api/events
+ * @access  Public
+ */
+export const getEvents = async (req, res, next) => {
+  try {
+    const events = await Event.find({ status: 'published' })
+      .populate('organizer', 'name email')
+      .sort({ date: 1 });
+
+    return res.status(200).json({
+      success: true,
+      count: events.length,
+      events,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get event by ID
+ * @route   GET /api/events/:id
+ * @access  Public
+ */
+export const getEventById = async (req, res, next) => {
+  try {
+    const event = await Event.findById(req.params.id).populate('organizer', 'name email');
+
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      });
+    }
+
+    return res.status(200).json({
       success: true,
       event,
     });

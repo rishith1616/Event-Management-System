@@ -1,16 +1,40 @@
 /**
- * routes/events.js — Public event browsing routes
- * Exposes endpoints for listing and viewing active, published events.
+ * routes/events.js — Express routing for event management
+ * Mounts endpoints for creating, updating, publishing, and listing events.
  */
 import express from 'express';
-import { getEvents, getEventById } from '../controllers/eventController.js';
+import {
+  createEvent,
+  updateEvent,
+  publishEvent,
+  getMyEvents,
+  getEvents,
+  getEventById,
+} from '../controllers/eventController.js';
+import auth from '../middleware/auth.js';
+import roleCheck from '../middleware/roleCheck.js';
 
 const router = express.Router();
 
-// GET /api/events - Browse and filter active published events
+// ── Public Routes ────────────────────────────────────────────────
+// GET /api/events — Public listing of published events
 router.get('/', getEvents);
 
-// GET /api/events/:id - View single event detail
+// ── Organizer Routes (Protected) ─────────────────────────────────
+// GET /api/events/my-events — Organizer's events (must precede /:id)
+router.get('/my-events', auth, roleCheck('organizer'), getMyEvents);
+
+// POST /api/events — Create new event (draft)
+router.post('/', auth, roleCheck('organizer'), createEvent);
+
+// PUT /api/events/:id — Update existing event
+router.put('/:id', auth, roleCheck('organizer'), updateEvent);
+
+// PATCH /api/events/:id/publish — Publish draft event
+router.patch('/:id/publish', auth, roleCheck('organizer'), publishEvent);
+
+// ── Public Single Event Route ────────────────────────────────────
+// GET /api/events/:id — Get event details
 router.get('/:id', getEventById);
 
 export default router;
