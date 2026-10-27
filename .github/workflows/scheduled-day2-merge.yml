@@ -1,9 +1,9 @@
 name: "Scheduled Sprint 1 (Day 2) PR Merges"
 
 on:
-  # Runs automatically on Day 2 (Oct 28 at 06:00 UTC / 11:30 AM IST)
+  # Runs automatically on Day 2 (Oct 28 at 12:30 UTC / 6:00 PM IST)
   schedule:
-    - cron: '0 6 28 10 *'
+    - cron: '30 12 28 10 *'
   # Allows manual 1-click execution anytime from GitHub Actions tab
   workflow_dispatch:
 
