@@ -1,48 +1,53 @@
 /**
- * models/Ticket.js — Ticket / Hold Mongoose schema and model
- * Represents tickets in various lifecycle states: 'held', 'confirmed', 'canceled', 'expired'.
- * Supports temporary checkout holds with an automatic 10-minute expiry window.
+ * models/Ticket.js — Ticket Mongoose schema and model
+ * Represents event tickets and temporary ticket holds during checkout.
+ * Stores reservation details, hold status, and attendee contact information.
  */
 import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema(
   {
-    event: {
+    eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Event reference is required'],
-      index: true,
+      required: false,
     },
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User reference is required'],
+      required: false,
+    },
+    ticketHoldId: {
+      type: String,
+      default: () => new mongoose.Types.ObjectId().toString(),
       index: true,
     },
     quantity: {
       type: Number,
-      required: [true, 'Ticket quantity is required'],
+      default: 1,
       min: [1, 'Quantity must be at least 1'],
+    },
+    unitPrice: {
+      type: Number,
+      default: 0,
+      min: [0, 'Ticket price cannot be negative'],
+    },
+    totalAmount: {
+      type: Number,
+      default: 0,
+      min: [0, 'Total amount cannot be negative'],
     },
     status: {
       type: String,
-      enum: {
-        values: ['held', 'confirmed', 'canceled', 'expired'],
-        message: '{VALUE} is not a valid ticket status',
-      },
+      enum: ['held', 'pending', 'confirmed', 'cancelled', 'expired'],
       default: 'held',
       index: true,
     },
     holdExpiresAt: {
       type: Date,
-      default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from creation
-      index: true,
+      default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes hold
     },
-    ticketId: {
-      type: String,
-      unique: true,
-      sparse: true, // sparse index allows null/undefined values before confirmation
-    },
+    // Attendee Contact Details (validated per FR-05)
     contactName: {
       type: String,
       trim: true,
@@ -65,17 +70,8 @@ const ticketSchema = new mongoose.Schema(
   }
 );
 
-// Virtual property to check if a hold is expired in application logic
-ticketSchema.virtual('isHoldExpired').get(function () {
-  if (this.status !== 'held') return false;
-  return new Date() > this.holdExpiresAt;
-});
-
-// Helper method to calculate remaining hold seconds
-ticketSchema.methods.getSecondsRemaining = function () {
-  if (this.status !== 'held' || !this.holdExpiresAt) return 0;
-  return Math.max(0, Math.floor((new Date(this.holdExpiresAt).getTime() - Date.now()) / 1000));
-};
+// Index to quickly find held tickets and enforce expiration logic
+ticketSchema.index({ status: 1, holdExpiresAt: 1 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 

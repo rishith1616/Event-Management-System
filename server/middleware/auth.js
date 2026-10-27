@@ -1,5 +1,5 @@
 /**
- * middleware/auth.js — JWT verification and role authorization middleware
+ * middleware/auth.js — JWT verification middleware
  * Authenticates API requests by validating the Bearer token in the Authorization header.
  * Attaches the authenticated user object to req.user for downstream middleware/handlers.
  */
@@ -46,38 +46,6 @@ export const protect = async (req, res, next) => {
       message: 'Not authorized, no token provided',
     });
   }
-};
-
-// Alias export for consistency with prompt
-export const auth = protect;
-
-/**
- * Middleware requiring the authenticated user to have the 'attendee' role
- */
-export const attendee = (req, res, next) => {
-  if (!req.user || req.user.role !== 'attendee') {
-    return res.status(403).json({
-      success: false,
-      message: `Access denied. Attendee role required, but user has role '${req.user ? req.user.role : 'unauthenticated'}'.`,
-    });
-  }
-  next();
-};
-
-/**
- * Generic role authorization middleware factory
- * @param  {...string} roles - Allowed user roles
- */
-export const authorize = (...roles) => {
-  return (req, res, next) => {
-    if (!req.user || !roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        message: `User role '${req.user ? req.user.role : 'unauthenticated'}' is not authorized to access this route`,
-      });
-    }
-    next();
-  };
 };
 
 export default protect;

@@ -1,6 +1,6 @@
 /**
  * routes/tickets.js — Ticket hold and management routes
- * Endpoints for creating holds, canceling holds, retrieving active holds, and releasing expired holds.
+ * Endpoints for creating holds, updating contact info, canceling holds, and retrieving holds.
  */
 import express from 'express';
 import {
@@ -9,8 +9,10 @@ import {
   getMyHolds,
   getHoldById,
   releaseExpiredHolds,
+  updateContactDetails,
 } from '../controllers/ticketController.js';
-import { auth, attendee } from '../middleware/auth.js';
+import { validateContact } from '../middleware/validators.js';
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -19,7 +21,14 @@ const router = express.Router();
  * @desc    Create a 10-minute hold on requested ticket quantity
  * @access  Private (Attendee)
  */
-router.post('/hold', auth, attendee, createHold);
+router.post('/hold', auth, createHold);
+
+/**
+ * @route   PATCH /api/tickets/:id/contact
+ * @desc    Validate and update attendee contact details for a held ticket before payment
+ * @access  Private
+ */
+router.patch('/:id/contact', auth, validateContact, updateContactDetails);
 
 /**
  * @route   DELETE /api/tickets/hold/:id
