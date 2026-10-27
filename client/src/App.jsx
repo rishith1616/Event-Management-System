@@ -13,6 +13,8 @@ import AttendeeDashboard from './pages/AttendeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CreateEvent from './pages/CreateEvent';
 import MyEvents from './pages/MyEvents';
+import EventList from './pages/EventList';
+import EventDetail from './pages/EventDetail';
 
 // Home landing page component
 const Home = () => {
@@ -39,6 +41,12 @@ const Home = () => {
       <p style={{ fontSize: '1.2rem', color: '#64748b', maxWidth: '600px', margin: '0 auto 2rem' }}>
         Plan, host, and discover events seamlessly. Register as an Organizer to create events, or as an Attendee to explore and purchase tickets.
       </p>
+
+      <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '1.5rem' }}>
+        <Link to="/events" className="btn btn-primary" style={{ background: '#4f46e5' }}>
+          Browse Events
+        </Link>
+      </div>
 
       {isAuthenticated ? (
         <div>
@@ -83,6 +91,8 @@ function App() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/events" element={<EventList />} />
+            <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
