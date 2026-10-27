@@ -1,0 +1,397 @@
+/* Checkout.css — Modern, responsive styling for ticket checkout and hold timer */
+
+.checkout-container {
+  max-width: 820px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: inherit;
+}
+
+.checkout-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.checkout-header h1 {
+  font-size: 2rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.checkout-subtitle {
+  color: #64748b;
+  font-size: 1rem;
+}
+
+/* Step Wizard Navigation */
+.checkout-steps {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  background: #ffffff;
+  padding: 1rem 1.5rem;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.checkout-step {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #94a3b8;
+  font-size: 0.95rem;
+}
+
+.checkout-step.active {
+  color: #4f46e5;
+  font-weight: 600;
+}
+
+.checkout-step.completed {
+  color: #16a34a;
+}
+
+.step-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #e2e8f0;
+  color: #475569;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.checkout-step.active .step-number {
+  background: #4f46e5;
+  color: #ffffff;
+}
+
+.checkout-step.completed .step-number {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: #e2e8f0;
+  margin: 0 0.75rem;
+}
+
+/* Hold Countdown Timer Card */
+.hold-timer-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.hold-timer-card.timer-warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.hold-timer-card.timer-danger {
+  border-color: #ef4444;
+  background: #fef2f2;
+  animation: pulse-danger 1.5s infinite;
+}
+
+@keyframes pulse-danger {
+  0%, 100% { border-color: #ef4444; }
+  50% { border-color: #fca5a5; }
+}
+
+.timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.timer-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #334155;
+}
+
+.timer-countdown {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: 'Courier New', Courier, monospace;
+  color: #1e293b;
+  letter-spacing: 1px;
+}
+
+.timer-warning .timer-countdown {
+  color: #d97706;
+}
+
+.timer-danger .timer-countdown {
+  color: #dc2626;
+}
+
+.timer-progress-track {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.timer-progress-bar {
+  height: 100%;
+  background: #10b981;
+  transition: width 1s linear, background-color 0.5s ease;
+}
+
+.timer-progress-bar.warning {
+  background: #f59e0b;
+}
+
+.timer-progress-bar.danger {
+  background: #ef4444;
+}
+
+.timer-hint {
+  margin-top: 0.4rem;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-align: right;
+}
+
+/* Event Summary Card */
+.event-summary-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.event-summary-card h2 {
+  font-size: 1.35rem;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+}
+
+.event-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+  padding: 1rem 0;
+  border-top: 1px solid #f1f5f9;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+
+.meta-value {
+  font-size: 1rem;
+  color: #1e293b;
+  font-weight: 500;
+}
+
+.ticket-breakdown-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.ticket-breakdown-table td {
+  padding: 0.6rem 0;
+  font-size: 0.95rem;
+}
+
+.ticket-breakdown-table .total-row td {
+  border-top: 2px solid #e2e8f0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #1e293b;
+  padding-top: 0.8rem;
+}
+
+/* Form Styles */
+.checkout-form-card {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.checkout-form-card h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1.25rem;
+  color: #1e293b;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Payment Mock */
+.payment-mock-badge {
+  background: #eff6ff;
+  border: 1px dashed #3b82f6;
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  color: #1d4ed8;
+}
+
+.credit-card-preview {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 360px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cc-chip {
+  width: 40px;
+  height: 28px;
+  background: #d97706;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+.cc-number {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.25rem;
+  letter-spacing: 2px;
+  margin-bottom: 1.25rem;
+}
+
+.cc-meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+/* Status Banners */
+.alert-banner {
+  padding: 1rem 1.25rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.alert-banner.error {
+  background: #fef2f2;
+  border: 1px solid #f87171;
+  color: #991b1b;
+}
+
+.alert-banner.success {
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  color: #166534;
+}
+
+.alert-banner.info {
+  background: #eff6ff;
+  border: 1px solid #93c5fd;
+  color: #1e40af;
+}
+
+/* Expired View */
+.expired-card {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.expired-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+.expired-card h2 {
+  font-size: 1.75rem;
+  color: #dc2626;
+  margin-bottom: 0.75rem;
+}
+
+.expired-card p {
+  color: #64748b;
+  max-width: 500px;
+  margin: 0 auto 2rem;
+  font-size: 1.05rem;
+}
+
+/* Buttons */
+.btn-secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+  border: none;
+}
+
+.btn-secondary:hover {
+  background-color: #cbd5e1;
+}
+
+.btn-outline-danger {
+  background: transparent;
+  border: 1px solid #ef4444;
+  color: #dc2626;
+}
+
+.btn-outline-danger:hover {
+  background: #fef2f2;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .checkout-steps {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .step-divider {
+    display: none;
+  }
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .form-actions .btn {
+    width: 100%;
+    text-align: center;
+  }
+}
