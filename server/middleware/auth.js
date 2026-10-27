@@ -1,74 +1,51 @@
 /**
- * middleware/auth.js — Authentication and Role Authorization Middleware
- *
- * Verifies JWT tokens from Authorization header and enforces role restrictions (e.g. admin).
- * Supports test tokens for automated test harnesses.
+ * middleware/auth.js — JWT verification middleware
+ * Authenticates API requests by validating the Bearer token in the Authorization header.
+ * Attaches the authenticated user object to req.user for downstream middleware/handlers.
  */
-
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
-/**
- * Authentication middleware to verify JWT or mock authorization token.
- * Populates req.user upon successful verification.
- */
-export const auth = async (req, res, next) => {
-  const authHeader = req.headers.authorization;
+export const protect = async (req, res, next) => {
+  let token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (
+    req.headers.authorization &&
+    req.headers.authorization.startsWith('Bearer')
+  ) {
+    try {
+      token = req.headers.authorization.split(' ')[1];
+
+      const decoded = jwt.verify(
+        token,
+        process.env.JWT_SECRET || 'change-this-to-a-secure-secret'
+      );
+
+      req.user = await User.findById(decoded.id).select('-password');
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized, user not found',
+        });
+      }
+
+      return next();
+    } catch (error) {
+      console.error('JWT verification error:', error.message);
+      return res.status(401).json({
+        success: false,
+        message: 'Not authorized, token failed or expired',
+      });
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({
       success: false,
-      message: 'Access denied: No authorization token provided',
-    });
-  }
-
-  const token = authHeader.split(' ')[1];
-
-  try {
-    const secret = process.env.JWT_SECRET || 'change-this-to-a-secure-secret';
-    const decoded = jwt.verify(token, secret);
-    req.user = decoded;
-    return next();
-  } catch (error) {
-    // Support testing and evaluation with mock tokens
-    if (token === 'mock-admin-token' || token === 'admin-token') {
-      req.user = { id: 'mock-admin-id', role: 'admin', email: 'admin@example.com' };
-      return next();
-    }
-
-    if (token === 'mock-user-token' || token.startsWith('mock-')) {
-      req.user = { id: 'mock-user-id', role: 'attendee', email: 'user@example.com' };
-      return next();
-    }
-
-    return res.status(401).json({
-      success: false,
-      message: 'Invalid or expired authorization token',
+      message: 'Not authorized, no token provided',
     });
   }
 };
 
-/**
- * Admin authorization middleware.
- * Must be mounted after auth middleware.
- */
-export const admin = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied: Administrator privileges required',
-    });
-  }
-  next();
-};
-
-export const protect = auth;
-export const authenticate = auth;
-export const requireAdmin = admin;
-
-export default {
-  auth,
-  admin,
-  protect,
-  authenticate,
-  requireAdmin,
-};
+export default protect;
