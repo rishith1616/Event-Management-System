@@ -1,9 +1,10 @@
 /**
  * middleware/auth.js — JWT verification middleware
  * Authenticates API requests by validating the Bearer token in the Authorization header.
- * Attaches the authenticated user payload to req.user for downstream middleware/handlers.
+ * Attaches the authenticated user object to req.user for downstream middleware/handlers.
  */
 import jwt from 'jsonwebtoken';
+import User from '../models/User.js';
 
 export const protect = async (req, res, next) => {
   let token;
@@ -20,7 +21,15 @@ export const protect = async (req, res, next) => {
         process.env.JWT_SECRET || 'change-this-to-a-secure-secret'
       );
 
-      req.user = decoded;
+      req.user = await User.findById(decoded.id).select('-password');
+
+      if (!req.user) {
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized, user not found',
+        });
+      }
+
       return next();
     } catch (error) {
       console.error('JWT verification error:', error.message);
@@ -39,5 +48,4 @@ export const protect = async (req, res, next) => {
   }
 };
 
-export const auth = protect;
 export default protect;

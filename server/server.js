@@ -6,6 +6,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
+import authRoutes from './routes/auth.js';
+import eventRoutes from './routes/events.js';
 import ticketRoutes from './routes/tickets.js';
 import errorHandler from './middleware/errorHandler.js';
 
@@ -24,8 +26,8 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Routes ───────────────────────────────────────────────────────
-// app.use('/api/auth',     authRoutes);
-// app.use('/api/events',   eventRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
 // app.use('/api/payments', paymentRoutes);
 // app.use('/api/admin',    adminRoutes);
