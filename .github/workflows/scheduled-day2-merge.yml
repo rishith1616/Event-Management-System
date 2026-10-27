@@ -1,0 +1,54 @@
+name: "Scheduled Sprint 1 (Day 2) PR Merges"
+
+on:
+  # Runs automatically on Day 2 (Oct 28 at 06:00 UTC / 11:30 AM IST)
+  schedule:
+    - cron: '0 6 28 10 *'
+  # Allows manual 1-click execution anytime from GitHub Actions tab
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  merge-day2-prs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Merge PR #20 (FR-04 Ticket Hold - 8 SP)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Merging PR #20..."
+          gh pr merge 20 --squash --delete-branch --repo ${{ github.repository }}
+
+      - name: Wait for branch sync
+        run: sleep 10
+
+      - name: Merge PR #18 (NFR-03 ACID Transactions - 5 SP)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Merging PR #18..."
+          gh pr merge 18 --squash --delete-branch --repo ${{ github.repository }}
+
+      - name: Wait for branch sync
+        run: sleep 10
+
+      - name: Merge PR #21 (FR-06 Payment Processing - 8 SP)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "Merging PR #21..."
+          gh pr merge 21 --squash --delete-branch --repo ${{ github.repository }}
+
+      - name: Sprint 1 Completion Summary
+        run: |
+          echo "=========================================="
+          echo " Sprint 1: All 8 PRs successfully merged! "
+          echo " Story Points Remaining: 0 SP             "
+          echo "=========================================="
