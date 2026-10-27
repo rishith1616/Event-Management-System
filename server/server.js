@@ -6,8 +6,11 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
-import errorHandler from './middleware/errorHandler.js';
+import authRoutes from './routes/auth.js';
+import eventRoutes from './routes/events.js';
 import ticketRoutes from './routes/tickets.js';
+import paymentRoutes from './routes/payments.js';
+import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
 
@@ -24,10 +27,10 @@ app.get('/api/health', (_req, res) => {
 });
 
 // ── Routes ───────────────────────────────────────────────────────
-// app.use('/api/auth',     authRoutes);
-// app.use('/api/events',   eventRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
-// app.use('/api/payments', paymentRoutes);
+app.use('/api/payments', paymentRoutes);
 // app.use('/api/admin',    adminRoutes);
 
 // ── Error Handler ────────────────────────────────────────────────
@@ -41,9 +44,6 @@ const start = async () => {
   });
 };
 
-// Start listening only when executed directly (not when imported in test runners)
-if (process.env.NODE_ENV !== 'test') {
-  start();
-}
+start();
 
 export default app;

@@ -1,70 +1,66 @@
 /**
- * models/Payment.js — Payment Mongoose Schema and Model
- * 
- * Records financial transactions associated with ticket confirmations.
- * Created within an ACID transaction session when confirming a ticket hold.
- * If the transaction aborts due to payment failure or database error,
- * the payment record is automatically rolled back with no orphaned records.
+ * models/Payment.js — Mongoose Schema for Payment Transactions
+ *
+ * Stores payment records, active provider audit trails, and refund history.
+ * Decoupled from ticket inventory logic to satisfy NFR-05.
  */
+
 import mongoose from 'mongoose';
 
 const paymentSchema = new mongoose.Schema(
   {
-    ticket: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ticket',
-      required: [true, 'Ticket reference is required'],
-      index: true,
-    },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
+    userId: {
+      type: mongoose.Schema.Types.Mixed,
       ref: 'User',
-      required: [true, 'User reference is required'],
-      index: true,
+      required: false,
     },
-    event: {
+    eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Event reference is required'],
-      index: true,
+      required: false,
     },
     amount: {
       type: Number,
       required: [true, 'Payment amount is required'],
-      min: [0, 'Amount cannot be negative'],
+      min: [0, 'Amount must be greater than or equal to 0'],
     },
     currency: {
       type: String,
-      required: true,
       default: 'USD',
       uppercase: true,
       trim: true,
     },
-    paymentMethod: {
+    provider: {
       type: String,
-      required: true,
-      default: 'credit_card',
-      enum: ['credit_card', 'debit_card', 'mock', 'paypal', 'stripe'],
-    },
-    paymentIntentId: {
-      type: String,
-      required: [true, 'Payment intent or transaction reference is required'],
-      unique: true,
+      required: [true, 'Payment provider name is required'],
       trim: true,
+    },
+    transactionId: {
+      type: String,
+      required: [true, 'Transaction ID is required'],
+      unique: true,
+      index: true,
     },
     status: {
       type: String,
       enum: ['pending', 'completed', 'failed', 'refunded'],
       default: 'completed',
-      index: true,
     },
-    receiptUrl: {
+    refundId: {
       type: String,
-      trim: true,
+      default: null,
     },
-    errorMessage: {
-      type: String,
-      trim: true,
+    refundAmount: {
+      type: Number,
+      default: null,
+    },
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
   },
   {
@@ -72,6 +68,7 @@ const paymentSchema = new mongoose.Schema(
   }
 );
 
-const Payment = mongoose.model('Payment', paymentSchema);
+// Fallback to prevent model recompilation errors in hot-reload or test environments
+const Payment = mongoose.models.Payment || mongoose.model('Payment', paymentSchema);
 
 export default Payment;

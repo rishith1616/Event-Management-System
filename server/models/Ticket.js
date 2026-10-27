@@ -1,82 +1,68 @@
 /**
- * models/Ticket.js — Ticket Mongoose Schema and Model
- * 
- * Represents both temporary ticket holds during checkout and finalized, confirmed tickets.
- * Tracks lifecycle status transitions: held -> confirmed OR held -> canceled/expired.
- * In an ACID transaction, status changes and inventory updates occur atomically.
+ * models/Ticket.js — Ticket Mongoose schema and model
+ * Represents event tickets and temporary ticket holds during checkout.
+ * Stores reservation details, hold status, and attendee contact information.
  */
 import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema(
   {
-    ticketId: {
-      type: String,
-      unique: true,
-      sparse: true, // Only set once confirmed
-      trim: true,
-    },
-    event: {
+    eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Event reference is required'],
-      index: true,
+      required: false,
     },
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User reference is required'],
+      required: false,
+    },
+    ticketHoldId: {
+      type: String,
+      default: () => new mongoose.Types.ObjectId().toString(),
       index: true,
     },
     quantity: {
       type: Number,
-      required: [true, 'Ticket quantity is required'],
-      min: [1, 'Quantity must be at least 1'],
       default: 1,
+      min: [1, 'Quantity must be at least 1'],
     },
     unitPrice: {
       type: Number,
-      required: [true, 'Unit price is required'],
-      min: [0, 'Unit price cannot be negative'],
       default: 0,
+      min: [0, 'Ticket price cannot be negative'],
     },
     totalAmount: {
       type: Number,
-      required: [true, 'Total amount is required'],
-      min: [0, 'Total amount cannot be negative'],
       default: 0,
+      min: [0, 'Total amount cannot be negative'],
     },
     status: {
       type: String,
-      enum: {
-        values: ['held', 'confirmed', 'canceled', 'expired', 'refunded'],
-        message: '{VALUE} is not a valid ticket status',
-      },
+      enum: ['held', 'pending', 'confirmed', 'cancelled', 'expired'],
       default: 'held',
       index: true,
-      required: true,
     },
     holdExpiresAt: {
       type: Date,
-      required: false,
-      index: true,
+      default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes hold
     },
-    payment: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Payment',
-      required: false,
+    // Attendee Contact Details (validated per FR-05)
+    contactName: {
+      type: String,
+      trim: true,
+      default: '',
     },
-    customerInfo: {
-      name: { type: String, trim: true },
-      email: { type: String, trim: true },
-      phone: { type: String, trim: true },
+    contactEmail: {
+      type: String,
+      trim: true,
+      lowercase: true,
+      default: '',
     },
-    confirmedAt: {
-      type: Date,
-      required: false,
-    },
-    canceledAt: {
-      type: Date,
-      required: false,
+    contactPhone: {
+      type: String,
+      trim: true,
+      default: '',
     },
   },
   {
@@ -84,9 +70,8 @@ const ticketSchema = new mongoose.Schema(
   }
 );
 
-// Compound index for querying user's tickets by status
-ticketSchema.index({ user: 1, status: 1 });
-ticketSchema.index({ event: 1, status: 1 });
+// Index to quickly find held tickets and enforce expiration logic
+ticketSchema.index({ status: 1, holdExpiresAt: 1 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 

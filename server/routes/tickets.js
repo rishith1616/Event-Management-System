@@ -1,9 +1,6 @@
 /**
- * routes/tickets.js — Express Router for Ticket Operations
- * 
- * Exposes atomic, transaction-wrapped endpoints for ticket reservations,
- * confirmation with payment processing, and hold release with inventory recovery.
- * Protected by JWT authentication middleware.
+ * routes/tickets.js — Ticket hold, transaction, and management routes
+ * Endpoints for atomic holds, atomic confirmations, releases, and contact updates.
  */
 import express from 'express';
 import {
@@ -12,18 +9,53 @@ import {
   releaseHoldAtomic,
   getTicketById,
   getMyTickets,
+  updateContactDetails,
 } from '../controllers/ticketController.js';
-import protect from '../middleware/auth.js';
+import { validateContact } from '../middleware/validators.js';
+import auth from '../middleware/auth.js';
 
 const router = express.Router();
 
-// ── Atomic ACID Endpoints (NFR-03) ──────────────────────────────────
-router.post('/hold-atomic', protect, createHoldAtomic);
-router.post('/:id/confirm-atomic', protect, confirmTicketAtomic);
-router.delete('/:id/release-atomic', protect, releaseHoldAtomic);
+/**
+ * @route   POST /api/tickets/hold-atomic
+ * @desc    Atomically create a ticket hold with multi-document transaction
+ * @access  Private (Attendee)
+ */
+router.post('/hold-atomic', auth, createHoldAtomic);
 
-// ── Query Endpoints ─────────────────────────────────────────────────
-router.get('/my-tickets', protect, getMyTickets);
-router.get('/:id', protect, getTicketById);
+/**
+ * @route   POST /api/tickets/:id/confirm-atomic
+ * @desc    Atomically confirm ticket and record payment with rollback guarantee
+ * @access  Private
+ */
+router.post('/:id/confirm-atomic', auth, confirmTicketAtomic);
+
+/**
+ * @route   DELETE /api/tickets/:id/release-atomic
+ * @desc    Atomically cancel hold and restore event capacity
+ * @access  Private
+ */
+router.delete('/:id/release-atomic', auth, releaseHoldAtomic);
+
+/**
+ * @route   PATCH /api/tickets/:id/contact
+ * @desc    Validate and update attendee contact details for a held ticket before payment
+ * @access  Private
+ */
+router.patch('/:id/contact', auth, validateContact, updateContactDetails);
+
+/**
+ * @route   GET /api/tickets/my-tickets
+ * @desc    Get all tickets belonging to authenticated user
+ * @access  Private
+ */
+router.get('/my-tickets', auth, getMyTickets);
+
+/**
+ * @route   GET /api/tickets/:id
+ * @desc    Get details of a specific ticket
+ * @access  Private
+ */
+router.get('/:id', auth, getTicketById);
 
 export default router;
