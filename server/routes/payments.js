@@ -1,45 +1,39 @@
 /**
- * routes/payments.js — Express routes for payment operations
- * Handles payment processing, hold detail queries, payment lookup by ticket,
- * and order cancellation.
+ * routes/payments.js — Payment API Routes
+ *
+ * Defines REST endpoints for processing charges, issuing refunds,
+ * and inspecting payment provider configurations.
  */
+
 import express from 'express';
 import {
   processPayment,
-  getPaymentByTicket,
-  getHoldDetails,
-  cancelHold,
+  processRefund,
+  getProviderInfo,
 } from '../controllers/paymentController.js';
-import { protect } from '../middleware/auth.js';
+import { auth, admin } from '../middleware/auth.js';
 
 const router = express.Router();
 
 /**
  * @route   POST /api/payments/process
- * @desc    Process payment for a held ticket and issue ticket ID
+ * @desc    Process a new payment via the active PaymentProvider
  * @access  Private (auth required)
  */
-router.post('/process', protect, processPayment);
+router.post('/process', auth, processPayment);
 
 /**
- * @route   GET /api/payments/ticket/:ticketId
- * @desc    Get payment record and receipt for a given ticket
+ * @route   POST /api/payments/:id/refund
+ * @desc    Issue a refund for a previously captured payment
  * @access  Private (auth required)
  */
-router.get('/ticket/:ticketId', protect, getPaymentByTicket);
+router.post('/:id/refund', auth, processRefund);
 
 /**
- * @route   GET /api/payments/hold/:holdId
- * @desc    Get hold summary and event details for checkout screen
- * @access  Private (auth required)
+ * @route   GET /api/payments/provider-info
+ * @desc    Retrieve information about the active payment gateway provider
+ * @access  Private/Admin (auth + admin required)
  */
-router.get('/hold/:holdId', protect, getHoldDetails);
-
-/**
- * @route   POST /api/payments/hold/:holdId/cancel
- * @desc    Voluntarily cancel a hold and release inventory
- * @access  Private (auth required)
- */
-router.post('/hold/:holdId/cancel', protect, cancelHold);
+router.get('/provider-info', auth, admin, getProviderInfo);
 
 export default router;

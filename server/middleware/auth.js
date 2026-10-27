@@ -4,7 +4,6 @@
  * Attaches the authenticated user object to req.user for downstream middleware/handlers.
  */
 import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
 import User from '../models/User.js';
 
 export const protect = async (req, res, next) => {
@@ -17,17 +16,6 @@ export const protect = async (req, res, next) => {
     try {
       token = req.headers.authorization.split(' ')[1];
 
-      // Support demo / test tokens for grading, tests, and mock environments
-      if (token === 'demo-token' || token === 'guest-token' || token === 'test-token') {
-        req.user = {
-          _id: new mongoose.Types.ObjectId('666666666666666666666666'),
-          name: 'Demo Attendee',
-          email: 'demo.attendee@example.com',
-          role: 'attendee',
-        };
-        return next();
-      }
-
       const decoded = jwt.verify(
         token,
         process.env.JWT_SECRET || 'change-this-to-a-secure-secret'
@@ -36,13 +24,10 @@ export const protect = async (req, res, next) => {
       req.user = await User.findById(decoded.id).select('-password');
 
       if (!req.user) {
-        // Fallback for valid token when user record is mock
-        req.user = {
-          _id: decoded.id || new mongoose.Types.ObjectId(),
-          name: decoded.name || 'User',
-          email: decoded.email || 'user@example.com',
-          role: decoded.role || 'attendee',
-        };
+        return res.status(401).json({
+          success: false,
+          message: 'Not authorized, user not found',
+        });
       }
 
       return next();

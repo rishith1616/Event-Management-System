@@ -1,54 +1,66 @@
 /**
- * models/Payment.js — Payment Mongoose schema and model
- * Represents payment transactions processed for ticket holds.
- * Strictly adheres to PCI-DSS by never storing raw card numbers —
- * only storing tokenized gateway references and masked last-4 digits.
+ * models/Payment.js — Mongoose Schema for Payment Transactions
+ *
+ * Stores payment records, active provider audit trails, and refund history.
+ * Decoupled from ticket inventory logic to satisfy NFR-05.
  */
+
 import mongoose from 'mongoose';
 
 const paymentSchema = new mongoose.Schema(
   {
-    ticket: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ticket',
-      required: [true, 'Ticket reference is required'],
-      index: true,
-    },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
+    userId: {
+      type: mongoose.Schema.Types.Mixed,
       ref: 'User',
-      required: [true, 'User reference is required'],
-      index: true,
+      required: false,
+    },
+    eventId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event',
+      required: false,
     },
     amount: {
       type: Number,
       required: [true, 'Payment amount is required'],
-      min: [0, 'Amount cannot be negative'],
+      min: [0, 'Amount must be greater than or equal to 0'],
     },
     currency: {
       type: String,
       default: 'USD',
-      trim: true,
       uppercase: true,
+      trim: true,
+    },
+    provider: {
+      type: String,
+      required: [true, 'Payment provider name is required'],
+      trim: true,
+    },
+    transactionId: {
+      type: String,
+      required: [true, 'Transaction ID is required'],
+      unique: true,
+      index: true,
     },
     status: {
       type: String,
-      enum: ['pending', 'approved', 'declined', 'refunded'],
-      default: 'pending',
-      index: true,
+      enum: ['pending', 'completed', 'failed', 'refunded'],
+      default: 'completed',
     },
-    gatewayTransactionId: {
+    refundId: {
       type: String,
-      trim: true,
+      default: null,
     },
-    gatewayToken: {
-      type: String,
-      trim: true,
+    refundAmount: {
+      type: Number,
+      default: null,
     },
-    last4: {
-      type: String,
-      trim: true,
-      maxlength: 4,
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
     },
   },
   {
@@ -56,10 +68,7 @@ const paymentSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for transaction lookups and reporting
-paymentSchema.index({ ticket: 1, createdAt: -1 });
-paymentSchema.index({ user: 1, createdAt: -1 });
-
-const Payment = mongoose.model('Payment', paymentSchema);
+// Fallback to prevent model recompilation errors in hot-reload or test environments
+const Payment = mongoose.models.Payment || mongoose.model('Payment', paymentSchema);
 
 export default Payment;

@@ -1,0 +1,208 @@
+/**
+ * components/ContactForm.css — Styles for attendee contact details form
+ * Defines clean card form layout, input validation states (red error / green success),
+ * inline error typography, and disabled button styling.
+ */
+
+.contact-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.contact-form-card {
+  width: 100%;
+  max-width: 540px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e2e8f0;
+  padding: 2.25rem 2rem;
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+.contact-form-header {
+  margin-bottom: 1.75rem;
+}
+
+.contact-form-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.contact-form-header .subtitle {
+  margin: 0;
+  font-size: 0.925rem;
+  color: #64748b;
+  line-height: 1.4;
+}
+
+/* ── Server Error & Success Banners ─────────────────────────────── */
+.server-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.server-error-banner .error-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.server-error-banner .error-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.server-error-item {
+  font-weight: 500;
+}
+
+.success-banner {
+  background-color: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  padding: 0.875rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ── Form Groups & Inputs ───────────────────────────────────────── */
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #334155;
+  letter-spacing: 0.01em;
+}
+
+.required-star {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
+.contact-input {
+  width: 100%;
+  padding: 0.75rem 0.875rem;
+  font-size: 0.95rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 8px;
+  background-color: #f8fafc;
+  color: #0f172a;
+  transition: all 0.18s ease-in-out;
+  box-sizing: border-box;
+}
+
+.contact-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.contact-input::placeholder {
+  color: #94a3b8;
+}
+
+/* ── Error & Success States ─────────────────────────────────────── */
+/* Error state: red border on invalid inputs */
+.contact-input.input-error {
+  border-color: #dc2626 !important;
+  background-color: #fffaf0;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
+.contact-input.input-error:focus {
+  border-color: #dc2626;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2);
+}
+
+/* Success state: green border on valid inputs */
+.contact-input.input-success {
+  border-color: #16a34a !important;
+  background-color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.1);
+}
+
+.contact-input.input-success:focus {
+  border-color: #16a34a;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
+}
+
+/* Red error text below input */
+.error-message {
+  color: #dc2626;
+  font-size: 0.825rem;
+  font-weight: 500;
+  margin-top: 0.15rem;
+  display: block;
+}
+
+/* ── Form Actions & Button ──────────────────────────────────────── */
+.form-actions {
+  margin-top: 0.75rem;
+}
+
+.btn-continue {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+}
+
+.btn-continue:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-continue:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Disabled button styling */
+.btn-continue:disabled {
+  background-color: #94a3b8;
+  color: #f1f5f9;
+  cursor: not-allowed;
+  opacity: 0.65;
+  box-shadow: none;
+  transform: none;
+}

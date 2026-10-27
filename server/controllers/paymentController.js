@@ -1,261 +1,109 @@
 /**
- * controllers/paymentController.js — Payment processing and ticket issuance controller
- * Handles payment verification through a simulated gateway, converts temporary ticket
- * holds into confirmed tickets with UUID ticketId, sends simulated confirmation emails,
- * releases holds and capacity on payment declines, and queries payment records.
- */
-import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid';
-import Payment from '../models/Payment.js';
-import Ticket from '../models/Ticket.js';
-import Event from '../models/Event.js';
-
-/**
- * Loosely-coupled Payment Gateway Adapter (NFR-05)
- * Simulates an external payment gateway (e.g., Stripe, PayPal).
- * In production, this module would invoke the external payment provider's SDK.
+ * controllers/paymentController.js — Loosely Coupled Payment Controller
  *
- * @param {object} params - Gateway parameters
- * @param {string} params.paymentToken - Tokenized payment credential (PCI-DSS compliant)
- * @param {number} params.amount - Total charge amount
- * @param {string} params.currency - ISO currency code
- * @returns {Promise<{success: boolean, status: string, gatewayTransactionId: string, error?: string}>}
+ * Implements NFR-05: Processes payments and refunds via the active PaymentProvider strategy.
+ * Decouples checkout and ticketing inventory logic from specific gateway SDKs.
  */
-export const simulateGatewayCharge = async ({ paymentToken, amount, currency = 'USD' }) => {
-  // Simulate network latency of payment gateway (100ms)
-  await new Promise((resolve) => setTimeout(resolve, 100));
 
-  // Gateways decline tokens matching failure test tokens
-  if (paymentToken && paymentToken.startsWith('tok_declined_')) {
-    const gatewayTransactionId = `txn_declined_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
-    return {
-      success: false,
-      status: 'declined',
-      gatewayTransactionId,
-      error: 'Card was declined by issuing bank (insufficient funds or fraud check).',
-    };
-  }
-
-  // Gateway approval
-  const gatewayTransactionId = `txn_appr_${uuidv4().replace(/-/g, '').slice(0, 16)}`;
-  return {
-    success: true,
-    status: 'approved',
-    gatewayTransactionId,
-  };
-};
+import mongoose from 'mongoose';
+import { getActiveProvider, getPaymentProvider, getSupportedProviders } from '../services/paymentGateway.js';
+import Payment from '../models/Payment.js';
 
 /**
- * @desc    Process payment for a held ticket and issue confirmed ticket
- * @route   POST /api/payments/process
- * @access  Private (Authenticated user)
+ * Process a customer payment charge using the configured active payment provider.
+ *
+ * Route: POST /api/payments/process
+ * Access: Authenticated (auth middleware)
+ *
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next middleware
  */
 export const processPayment = async (req, res, next) => {
   try {
-    const { holdId, paymentToken, last4 } = req.body;
+    const { amount, currency = 'USD', token, eventId, metadata } = req.body;
 
     // Validate request parameters
-    if (!holdId || !paymentToken) {
+    if (amount === undefined || amount === null || typeof amount !== 'number' || amount <= 0) {
       return res.status(400).json({
         success: false,
-        message: 'holdId and paymentToken are required',
+        message: 'Invalid payment amount: amount must be a positive number',
       });
     }
 
-    if (!mongoose.Types.ObjectId.isValid(holdId)) {
+    if (!token) {
       return res.status(400).json({
         success: false,
-        message: 'Invalid hold ID format',
+        message: 'Payment token is required to process transaction',
       });
     }
 
-    // Retrieve ticket hold with populated event details
-    const ticket = await Ticket.findById(holdId).populate('event');
-    if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ticket hold not found',
-      });
-    }
+    // Resolve the active payment provider strategy
+    const provider = getActiveProvider();
 
-    // Determine associated user ID (from auth middleware or ticket record)
-    const userId = req.user?._id || ticket.user;
+    // Execute charge through the provider abstraction
+    const chargeResult = await provider.charge(amount, currency, token);
 
-    // Verify hold status
-    if (ticket.status === 'confirmed') {
+    // Handle provider-agnostic payment failure
+    if (!chargeResult.success) {
       return res.status(400).json({
         success: false,
-        message: 'This ticket hold has already been paid and confirmed.',
-        ticketId: ticket.ticketId,
+        message: chargeResult.error || 'Payment transaction failed',
+        provider: provider.getName(),
       });
     }
 
-    // Check if hold has expired while in 'held' status
-    const now = new Date();
-    if (ticket.status === 'held' && ticket.holdExpiresAt && now > new Date(ticket.holdExpiresAt)) {
-      // Hold has expired: release inventory and mark canceled
-      if (ticket.event) {
-        await Event.findByIdAndUpdate(ticket.event._id || ticket.event, {
-          $inc: { availableTickets: ticket.quantity },
+    // Persist payment record with provider audit data if database is connected
+    let paymentRecord;
+    try {
+      if (mongoose.connection && mongoose.connection.readyState === 1) {
+        paymentRecord = await Payment.create({
+          userId: req.user?.id || req.user?._id || null,
+          eventId: eventId || null,
+          amount,
+          currency,
+          provider: provider.getName(),
+          transactionId: chargeResult.transactionId,
+          status: 'completed',
+          metadata: metadata || {},
         });
+      } else {
+        paymentRecord = {
+          _id: chargeResult.transactionId,
+          userId: req.user?.id || req.user?._id || null,
+          eventId: eventId || null,
+          amount,
+          currency,
+          provider: provider.getName(),
+          transactionId: chargeResult.transactionId,
+          status: 'completed',
+          metadata: metadata || {},
+          createdAt: new Date(),
+        };
       }
-      ticket.status = 'canceled';
-      await ticket.save();
-
-      return res.status(400).json({
-        success: false,
-        message: 'Ticket hold has expired. The held tickets have been returned to available inventory.',
-        retryable: false,
-      });
-    }
-
-    // Handle retry on a previously canceled hold (e.g., following a payment decline)
-    if (ticket.status === 'canceled') {
-      const eventDoc = await Event.findById(ticket.event._id || ticket.event);
-      if (!eventDoc || eventDoc.availableTickets < ticket.quantity) {
-        return res.status(400).json({
-          success: false,
-          message: 'This hold was canceled and tickets are no longer available to re-reserve. Please start a new checkout.',
-          retryable: false,
-        });
-      }
-
-      // Re-reserve inventory for retry attempt
-      eventDoc.availableTickets -= ticket.quantity;
-      await eventDoc.save();
-
-      ticket.status = 'held';
-      ticket.holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10-minute hold window
-      await ticket.save();
-    }
-
-    // Compute total charge amount
-    const ticketPrice = ticket.totalPrice || (ticket.event?.price ? ticket.event.price * ticket.quantity : 0);
-    const amount = Number(ticketPrice);
-
-    // Extract masked last 4 digits (strictly compliant with PCI-DSS: never raw card numbers)
-    let cardLast4 = '4242';
-    if (last4 && typeof last4 === 'string') {
-      cardLast4 = last4.slice(-4);
-    } else if (paymentToken.includes('_')) {
-      const parts = paymentToken.split('_');
-      const lastPart = parts[parts.length - 1];
-      if (/^\d{4}$/.test(lastPart)) {
-        cardLast4 = lastPart;
-      }
-    }
-
-    // Call payment gateway adapter
-    const gatewayResult = await simulateGatewayCharge({
-      paymentToken,
-      amount,
-      currency: 'USD',
-    });
-
-    // ── Payment Declined Branch ──────────────────────────────────────────
-    if (!gatewayResult.success) {
-      // 1. Create Payment record with 'declined' status
-      const payment = await Payment.create({
-        ticket: ticket._id,
-        user: userId,
+    } catch (dbError) {
+      // In-memory fallback if database write encounters an error
+      console.warn('[PaymentController] Database save warning:', dbError.message);
+      paymentRecord = {
+        _id: chargeResult.transactionId,
+        userId: req.user?.id || req.user?._id || null,
+        eventId: eventId || null,
         amount,
-        currency: 'USD',
-        status: 'declined',
-        gatewayTransactionId: gatewayResult.gatewayTransactionId,
-        gatewayToken: paymentToken,
-        last4: cardLast4,
-      });
-
-      // 2. Release hold: Restore availableTickets on Event
-      if (ticket.event) {
-        await Event.findByIdAndUpdate(ticket.event._id || ticket.event, {
-          $inc: { availableTickets: ticket.quantity },
-        });
-      }
-
-      // 3. Mark Ticket status as 'canceled'
-      ticket.status = 'canceled';
-      await ticket.save();
-
-      console.warn(
-        `[Payment Service] Payment DECLINED for Ticket ${ticket._id}. Gateway Txn: ${gatewayResult.gatewayTransactionId}. Hold released.`
-      );
-
-      // 4. Return error with retry option
-      return res.status(400).json({
-        success: false,
-        message: gatewayResult.error || 'Payment was declined by the card issuer. Please try another card.',
-        error: 'Payment declined',
-        retryable: true,
-        holdId: ticket._id,
-        payment: {
-          _id: payment._id,
-          status: payment.status,
-          amount: payment.amount,
-          currency: payment.currency,
-          gatewayTransactionId: payment.gatewayTransactionId,
-          last4: payment.last4,
-          createdAt: payment.createdAt,
-        },
-      });
+        currency,
+        provider: provider.getName(),
+        transactionId: chargeResult.transactionId,
+        status: 'completed',
+        metadata: metadata || {},
+        createdAt: new Date(),
+      };
     }
 
-    // ── Payment Approved Branch ──────────────────────────────────────────
-    // 1. Generate unique UUID Ticket ID
-    const generatedTicketId = uuidv4();
-
-    // 2. Update Ticket status to 'confirmed' and assign ticketId
-    ticket.status = 'confirmed';
-    ticket.ticketId = generatedTicketId;
-    ticket.holdExpiresAt = null; // Clear hold expiration once confirmed
-    await ticket.save();
-
-    // 3. Create Payment record with 'approved' status
-    const payment = await Payment.create({
-      ticket: ticket._id,
-      user: userId,
-      amount,
-      currency: 'USD',
-      status: 'approved',
-      gatewayTransactionId: gatewayResult.gatewayTransactionId,
-      gatewayToken: paymentToken,
-      last4: cardLast4,
-    });
-
-    // 4. Simulate sending confirmation email and receipt (console.log)
-    const recipientEmail = ticket.contactEmail || req.user?.email || 'attendee@example.com';
-    const recipientName = ticket.contactName || req.user?.name || 'Valued Attendee';
-    const eventName = ticket.event?.title || 'Event';
-
-    console.log(
-      `[Email Service] Confirmation email and receipt sent to ${recipientName} <${recipientEmail}> for Ticket ID: ${generatedTicketId} (Event: "${eventName}", Quantity: ${ticket.quantity}, Total: $${amount})`
-    );
-
-    // 5. Return success confirmation with Ticket ID and payment summary
     return res.status(200).json({
       success: true,
-      message: 'Payment processed successfully. Ticket confirmed and email receipt issued.',
-      ticketId: generatedTicketId,
-      ticket: {
-        _id: ticket._id,
-        ticketId: ticket.ticketId,
-        status: ticket.status,
-        quantity: ticket.quantity,
-        totalPrice: amount,
-        contactName: recipientName,
-        contactEmail: recipientEmail,
-        contactPhone: ticket.contactPhone,
-        event: ticket.event,
-      },
-      payment: {
-        _id: payment._id,
-        status: payment.status,
-        amount: payment.amount,
-        currency: payment.currency,
-        gatewayTransactionId: payment.gatewayTransactionId,
-        last4: payment.last4,
-        createdAt: payment.createdAt,
-      },
+      message: 'Payment processed successfully',
+      provider: provider.getName(),
+      transactionId: chargeResult.transactionId,
+      payment: paymentRecord,
     });
   } catch (error) {
     next(error);
@@ -263,53 +111,86 @@ export const processPayment = async (req, res, next) => {
 };
 
 /**
- * @desc    Get payment record for a given ticket (by Ticket _id or UUID ticketId)
- * @route   GET /api/payments/ticket/:ticketId
- * @access  Private (Authenticated user)
+ * Process a refund for a previously captured transaction.
+ *
+ * Route: POST /api/payments/:id/refund
+ * Access: Authenticated (auth middleware)
+ *
+ * @param {import('express').Request} req - Express request
+ * @param {import('express').Response} res - Express response
+ * @param {import('express').NextFunction} next - Express next middleware
  */
-export const getPaymentByTicket = async (req, res, next) => {
+export const processRefund = async (req, res, next) => {
   try {
-    const { ticketId } = req.params;
+    const { id } = req.params;
+    const { amount } = req.body;
 
-    if (!ticketId) {
+    if (!id) {
       return res.status(400).json({
         success: false,
-        message: 'ticketId parameter is required',
+        message: 'Payment identifier is required for refund',
       });
     }
 
-    // Resolve ticket by MongoDB ObjectId or UUID ticketId
-    let ticketDoc = null;
-    if (mongoose.Types.ObjectId.isValid(ticketId)) {
-      ticketDoc = await Ticket.findById(ticketId).populate('event');
+    // Lookup payment record by MongoDB _id or transactionId
+    let payment = null;
+    try {
+      if (mongoose.Types.ObjectId.isValid(id)) {
+        payment = await Payment.findById(id);
+      }
+      if (!payment) {
+        payment = await Payment.findOne({ transactionId: id });
+      }
+    } catch (lookupErr) {
+      console.warn('[PaymentController] Payment lookup warning:', lookupErr.message);
     }
-    if (!ticketDoc) {
-      ticketDoc = await Ticket.findOne({ ticketId }).populate('event');
-    }
-
-    if (!ticketDoc) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ticket not found',
-      });
-    }
-
-    // Find the latest payment record for this ticket
-    const payment = await Payment.findOne({ ticket: ticketDoc._id })
-      .sort({ createdAt: -1 })
-      .populate('user', 'name email');
 
     if (!payment) {
       return res.status(404).json({
         success: false,
-        message: 'No payment record found for this ticket',
+        message: `Payment record not found for identifier: ${id}`,
       });
+    }
+
+    if (payment.status === 'refunded') {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment has already been refunded',
+      });
+    }
+
+    // Route refund through the original provider or the active provider
+    const provider = payment.provider
+      ? getPaymentProvider(payment.provider)
+      : getActiveProvider();
+
+    const refundAmount = amount !== undefined ? amount : payment.amount;
+    const refundResult = await provider.refund(payment.transactionId, refundAmount);
+
+    if (!refundResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: refundResult.error || 'Refund processing failed',
+        provider: provider.getName(),
+      });
+    }
+
+    // Update payment record status
+    payment.status = 'refunded';
+    payment.refundId = refundResult.refundId;
+    payment.refundAmount = refundAmount;
+    payment.refundedAt = new Date();
+
+    if (typeof payment.save === 'function') {
+      await payment.save();
     }
 
     return res.status(200).json({
       success: true,
+      message: 'Refund processed successfully',
+      refundId: refundResult.refundId,
+      provider: provider.getName(),
       payment,
-      ticket: ticketDoc,
     });
   } catch (error) {
     next(error);
@@ -317,98 +198,27 @@ export const getPaymentByTicket = async (req, res, next) => {
 };
 
 /**
- * @desc    Get hold / order summary details for the checkout payment screen
- * @route   GET /api/payments/hold/:holdId
- * @access  Private (Authenticated user)
+ * Retrieve metadata about the currently active payment provider.
+ *
+ * Route: GET /api/payments/provider-info
+ * Access: Authenticated Admin (auth, admin middleware)
+ *
+ * @param {import('express').Request} _req - Express request
+ * @param {import('express').Response} res - Express response
  */
-export const getHoldDetails = async (req, res, next) => {
-  try {
-    const { holdId } = req.params;
+export const getProviderInfo = (_req, res) => {
+  const provider = getActiveProvider();
 
-    if (!mongoose.Types.ObjectId.isValid(holdId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid hold ID format',
-      });
-    }
-
-    const ticket = await Ticket.findById(holdId).populate('event');
-    if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ticket hold not found',
-      });
-    }
-
-    const isExpired =
-      ticket.status === 'held' &&
-      ticket.holdExpiresAt &&
-      new Date() > new Date(ticket.holdExpiresAt);
-
-    const unitPrice = ticket.event?.price || 0;
-    const totalPrice = ticket.totalPrice || unitPrice * ticket.quantity;
-
-    return res.status(200).json({
-      success: true,
-      hold: {
-        _id: ticket._id,
-        ticketId: ticket.ticketId,
-        status: ticket.status,
-        quantity: ticket.quantity,
-        unitPrice,
-        totalPrice,
-        holdExpiresAt: ticket.holdExpiresAt,
-        isExpired,
-        contactName: ticket.contactName,
-        contactEmail: ticket.contactEmail,
-        contactPhone: ticket.contactPhone,
-        event: ticket.event,
-      },
-    });
-  } catch (error) {
-    next(error);
-  }
+  return res.status(200).json({
+    success: true,
+    activeProvider: provider.getName(),
+    configuredEnv: process.env.PAYMENT_PROVIDER || 'mock',
+    supportedProviders: getSupportedProviders(),
+  });
 };
 
-/**
- * @desc    Voluntarily cancel a hold and release event capacity
- * @route   POST /api/payments/hold/:holdId/cancel
- * @access  Private (Authenticated user)
- */
-export const cancelHold = async (req, res, next) => {
-  try {
-    const { holdId } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(holdId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid hold ID format',
-      });
-    }
-
-    const ticket = await Ticket.findById(holdId);
-    if (!ticket) {
-      return res.status(404).json({
-        success: false,
-        message: 'Ticket hold not found',
-      });
-    }
-
-    if (ticket.status === 'held') {
-      if (ticket.event) {
-        await Event.findByIdAndUpdate(ticket.event, {
-          $inc: { availableTickets: ticket.quantity },
-        });
-      }
-      ticket.status = 'canceled';
-      await ticket.save();
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: 'Hold released and order canceled successfully.',
-    });
-  } catch (error) {
-    next(error);
-  }
+export default {
+  processPayment,
+  processRefund,
+  getProviderInfo,
 };

@@ -1,65 +1,68 @@
 /**
  * models/Ticket.js — Ticket Mongoose schema and model
  * Represents event tickets and temporary ticket holds during checkout.
- * Tracks hold lifecycle, confirmation with unique UUID ticketId, and buyer details.
+ * Stores reservation details, hold status, and attendee contact information.
  */
 import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema(
   {
-    event: {
+    eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
-      required: [true, 'Event reference is required'],
+      required: false,
     },
-    user: {
+    userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: [true, 'User reference is required'],
+      required: false,
+    },
+    ticketHoldId: {
+      type: String,
+      default: () => new mongoose.Types.ObjectId().toString(),
+      index: true,
     },
     quantity: {
       type: Number,
-      required: [true, 'Ticket quantity is required'],
-      min: [1, 'Quantity must be at least 1'],
       default: 1,
+      min: [1, 'Quantity must be at least 1'],
     },
     unitPrice: {
       type: Number,
-      min: [0, 'Unit price cannot be negative'],
       default: 0,
+      min: [0, 'Ticket price cannot be negative'],
     },
-    totalPrice: {
+    totalAmount: {
       type: Number,
-      min: [0, 'Total price cannot be negative'],
       default: 0,
+      min: [0, 'Total amount cannot be negative'],
     },
     status: {
       type: String,
-      enum: ['held', 'confirmed', 'canceled', 'refunded'],
+      enum: ['held', 'pending', 'confirmed', 'cancelled', 'expired'],
       default: 'held',
       index: true,
     },
     holdExpiresAt: {
       type: Date,
-      index: true,
+      default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes hold
     },
-    ticketId: {
-      type: String,
-      unique: true,
-      sparse: true,
-      index: true,
-    },
+    // Attendee Contact Details (validated per FR-05)
     contactName: {
       type: String,
       trim: true,
+      default: '',
     },
     contactEmail: {
       type: String,
       trim: true,
+      lowercase: true,
+      default: '',
     },
     contactPhone: {
       type: String,
       trim: true,
+      default: '',
     },
   },
   {
@@ -67,9 +70,8 @@ const ticketSchema = new mongoose.Schema(
   }
 );
 
-// Indexes for fast lookup of held/confirmed tickets
-ticketSchema.index({ event: 1, status: 1 });
-ticketSchema.index({ user: 1, status: 1 });
+// Index to quickly find held tickets and enforce expiration logic
+ticketSchema.index({ status: 1, holdExpiresAt: 1 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 
