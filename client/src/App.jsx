@@ -11,6 +11,8 @@ import Register from './pages/Register';
 import OrganizerDashboard from './pages/OrganizerDashboard';
 import AttendeeDashboard from './pages/AttendeeDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import CreateEvent from './pages/CreateEvent';
+import MyEvents from './pages/MyEvents';
 
 // Home landing page component
 const Home = () => {
@@ -43,9 +45,21 @@ const Home = () => {
           <p style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>
             Logged in as <strong>{user?.name}</strong> ({user?.role})
           </p>
-          <Link to={getDashboardPath()} className="btn btn-primary">
-            Go to Your Dashboard
-          </Link>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <Link to={getDashboardPath()} className="btn btn-primary">
+              Go to Your Dashboard
+            </Link>
+            {user?.role === 'organizer' && (
+              <>
+                <Link to="/events/my-events" className="btn btn-primary" style={{ background: '#0284c7' }}>
+                  My Events
+                </Link>
+                <Link to="/events/create" className="btn btn-success">
+                  + Create Event
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       ) : (
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
@@ -71,6 +85,8 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+
+            {/* Role-Specific Dashboards */}
             <Route
               path="/dashboard/organizer"
               element={
@@ -95,6 +111,33 @@ function App() {
                 </ProtectedRoute>
               }
             />
+
+            {/* FR-02 Organizer Event Management */}
+            <Route
+              path="/events/create"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/edit/:id"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <CreateEvent />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/events/my-events"
+              element={
+                <ProtectedRoute roles={['organizer']}>
+                  <MyEvents />
+                </ProtectedRoute>
+              }
+            />
+
             <Route path="*" element={<Home />} />
           </Routes>
         </main>
