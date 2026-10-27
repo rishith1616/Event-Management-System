@@ -7,6 +7,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import connectDB from './config/db.js';
 import errorHandler from './middleware/errorHandler.js';
+import ticketRoutes from './routes/tickets.js';
 
 dotenv.config();
 
@@ -22,10 +23,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ── Route placeholders (mounted by feature branches) ─────────────
+// ── Routes ───────────────────────────────────────────────────────
 // app.use('/api/auth',     authRoutes);
 // app.use('/api/events',   eventRoutes);
-// app.use('/api/tickets',  ticketRoutes);
+app.use('/api/tickets', ticketRoutes);
 // app.use('/api/payments', paymentRoutes);
 // app.use('/api/admin',    adminRoutes);
 
@@ -40,6 +41,9 @@ const start = async () => {
   });
 };
 
-start();
+// Start listening only when executed directly (not when imported in test runners)
+if (process.env.NODE_ENV !== 'test') {
+  start();
+}
 
 export default app;
