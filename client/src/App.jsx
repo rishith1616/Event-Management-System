@@ -16,6 +16,7 @@ import MyEvents from './pages/MyEvents';
 import EventList from './pages/EventList';
 import EventDetail from './pages/EventDetail';
 import ContactForm from './components/ContactForm';
+import Checkout from './pages/Checkout';
 
 // Home landing page component
 const Home = () => {
@@ -97,7 +98,9 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
 
-            {/* FR-05 Contact Validation Route */}
+            {/* FR-04 & FR-05 Checkout Flow */}
+            <Route path="/checkout/:holdId" element={<Checkout />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/contact" element={<ContactForm />} />
             <Route path="/checkout/:ticketId/contact" element={<ContactForm />} />
 
