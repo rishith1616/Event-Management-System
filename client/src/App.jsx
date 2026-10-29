@@ -16,6 +16,7 @@ import MyEvents from './pages/MyEvents';
 import EventList from './pages/EventList';
 import EventDetail from './pages/EventDetail';
 import ContactForm from './components/ContactForm';
+import Payment from './pages/Payment';
 import Checkout from './pages/Checkout';
 
 // Home landing page component
@@ -103,6 +104,9 @@ function App() {
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/checkout/contact" element={<ContactForm />} />
             <Route path="/checkout/:ticketId/contact" element={<ContactForm />} />
+
+            {/* FR-06 Payment Processing Route */}
+            <Route path="/payment/:holdId" element={<Payment />} />
 
             {/* Role-Specific Dashboards */}
             <Route
