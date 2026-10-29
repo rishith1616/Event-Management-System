@@ -4,11 +4,14 @@
  * ticket availability, and booking action placeholder.
  */
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 
 const EventDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const { token } = useAuth();
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -43,7 +46,11 @@ const EventDetail = () => {
   }, [id]);
 
   const handleBookTickets = () => {
-    setBookingMessage('Ticket booking is coming soon! Please check back shortly.');
+    if (!token && !localStorage.getItem('token')) {
+      navigate('/login');
+      return;
+    }
+    navigate(`/checkout?eventId=${id}&quantity=1`);
   };
 
   if (loading) {
