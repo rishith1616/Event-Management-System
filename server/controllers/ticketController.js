@@ -1,6 +1,6 @@
 /**
  * controllers/ticketController.js — Ticket hold and lifecycle management controller
- * Implements MongoDB ACID Multi-Document Transactions for atomic holds, confirmations, and releases.
+ * Implements FR-04 (Ticket Hold), FR-05 (Contact Validation), and NFR-03 (MongoDB ACID Multi-Document Transactions).
  */
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,7 +10,165 @@ import Payment from '../models/Payment.js';
 import { withTransaction } from '../services/transactionService.js';
 
 /**
- * @desc    Atomically create a temporary ticket hold with capacity decrement
+ * Internal helper to automatically release expired holds and restore capacity to events
+ */
+export const releaseExpiredHoldsInternal = async () => {
+  const now = new Date();
+  const expiredTickets = await Ticket.find({
+    status: 'held',
+    holdExpiresAt: { $lt: now },
+  });
+
+  let releasedCount = 0;
+  for (const ticket of expiredTickets) {
+    const updated = await Ticket.findOneAndUpdate(
+      { _id: ticket._id, status: 'held' },
+      { $set: { status: 'expired' } },
+      { new: true }
+    );
+
+    if (updated) {
+      await Event.findByIdAndUpdate(ticket.event, {
+        $inc: { availableTickets: ticket.quantity },
+      });
+      releasedCount += ticket.quantity;
+    }
+  }
+
+  return releasedCount;
+};
+
+/**
+ * @desc    Create a temporary 10-minute hold on requested ticket quantity
+ * @route   POST /api/tickets/hold
+ * @access  Private (Attendee)
+ */
+export const createHold = async (req, res, next) => {
+  try {
+    const { eventId, quantity, contactName, contactEmail, contactPhone } = req.body;
+
+    if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'A valid event ID is required',
+      });
+    }
+
+    const qty = parseInt(quantity, 10);
+    if (!qty || qty < 1) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ticket quantity must be at least 1',
+      });
+    }
+
+    // Proactively reclaim any holds that expired prior to this request
+    await releaseExpiredHoldsInternal();
+
+    // Verify the event exists and check status
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      });
+    }
+
+    if (event.status === 'suspended') {
+      return res.status(400).json({
+        success: false,
+        message: 'This event has been suspended',
+      });
+    }
+
+    if (event.status === 'canceled') {
+      return res.status(400).json({
+        success: false,
+        message: 'This event has been canceled',
+      });
+    }
+
+    // Capacity verification: check available tickets
+    if (event.availableTickets < qty) {
+      const remaining = Math.max(0, event.availableTickets);
+      const message =
+        remaining === 1
+          ? 'Only 1 ticket remaining'
+          : `Only ${remaining} ticket(s) remaining`;
+
+      return res.status(400).json({
+        success: false,
+        message,
+        availableTickets: remaining,
+      });
+    }
+
+    // Atomically decrement availableTickets to guarantee no race condition / double-booking
+    const updatedEvent = await Event.findOneAndUpdate(
+      {
+        _id: eventId,
+        status: { $nin: ['canceled', 'suspended'] },
+        availableTickets: { $gte: qty },
+      },
+      {
+        $inc: { availableTickets: -qty },
+      },
+      { new: true }
+    );
+
+    if (!updatedEvent) {
+      const latest = await Event.findById(eventId);
+      const remaining = latest ? Math.max(0, latest.availableTickets) : 0;
+      const message =
+        remaining === 1
+          ? 'Only 1 ticket remaining'
+          : `Only ${remaining} ticket(s) remaining`;
+
+      return res.status(400).json({
+        success: false,
+        message,
+        availableTickets: remaining,
+      });
+    }
+
+    const holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+
+    let ticket;
+    try {
+      ticket = await Ticket.create({
+        event: eventId,
+        user: req.user?._id || req.user?.id,
+        quantity: qty,
+        status: 'held',
+        holdExpiresAt,
+        contactName: contactName || (req.user ? req.user.name : ''),
+        contactEmail: contactEmail || (req.user ? req.user.email : ''),
+        contactPhone: contactPhone || '',
+      });
+    } catch (createError) {
+      await Event.findByIdAndUpdate(eventId, {
+        $inc: { availableTickets: qty },
+      });
+      throw createError;
+    }
+
+    await ticket.populate('event');
+
+    return res.status(201).json({
+      success: true,
+      message: 'Tickets held successfully for 10 minutes',
+      hold: ticket,
+      ticket,
+      expiresAt: holdExpiresAt,
+      secondsRemaining: 600,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Atomically create a temporary ticket hold with capacity decrement under ACID transaction
  * @route   POST /api/tickets/hold-atomic
  * @access  Private (Attendee)
  */
@@ -89,7 +247,7 @@ export const createHoldAtomic = async (req, res, next) => {
       }
 
       const holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      const totalAmount = event.price * qty;
+      const totalAmount = (event.price || 0) * qty;
 
       const [ticket] = await Ticket.create(
         [
@@ -97,7 +255,7 @@ export const createHoldAtomic = async (req, res, next) => {
             event: eventId,
             user: userId,
             quantity: qty,
-            unitPrice: event.price,
+            unitPrice: event.price || 0,
             totalAmount,
             status: 'held',
             holdExpiresAt,
@@ -132,7 +290,7 @@ export const createHoldAtomic = async (req, res, next) => {
 };
 
 /**
- * @desc    Atomically confirm a ticket hold and record payment
+ * @desc    Atomically confirm a ticket hold and record payment under ACID transaction
  * @route   POST /api/tickets/:id/confirm-atomic
  * @access  Private
  */
@@ -185,7 +343,7 @@ export const confirmTicketAtomic = async (req, res, next) => {
             currency: 'USD',
             paymentMethod,
             transactionId: paymentIntentId,
-            status: 'approved',
+            status: 'completed',
           },
         ],
         { session }
@@ -225,7 +383,7 @@ export const confirmTicketAtomic = async (req, res, next) => {
 };
 
 /**
- * @desc    Atomically release a ticket hold and restore event capacity
+ * @desc    Atomically release a ticket hold and restore event capacity under ACID transaction
  * @route   DELETE /api/tickets/:id/release-atomic
  * @access  Private
  */
@@ -288,6 +446,185 @@ export const releaseHoldAtomic = async (req, res, next) => {
       success: true,
       message: 'Ticket hold released and inventory restored atomically',
       data: transactionResult,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Release all expired holds across the system and restore inventory
+ * @route   POST /api/tickets/release-expired
+ * @access  Public / Internal
+ */
+export const releaseExpiredHolds = async (_req, res, next) => {
+  try {
+    const releasedCount = await releaseExpiredHoldsInternal();
+    return res.json({
+      success: true,
+      message: `Released ${releasedCount} expired hold ticket(s)`,
+      releasedCount,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get current user's active, non-expired ticket holds
+ * @route   GET /api/tickets/my-holds
+ * @access  Private
+ */
+export const getMyHolds = async (req, res, next) => {
+  try {
+    await releaseExpiredHoldsInternal();
+
+    const now = new Date();
+    const holds = await Ticket.find({
+      user: req.user?._id || req.user?.id,
+      status: 'held',
+      holdExpiresAt: { $gt: now },
+    })
+      .populate('event')
+      .sort({ createdAt: -1 });
+
+    return res.json({
+      success: true,
+      count: holds.length,
+      holds,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get specific hold details by ID
+ * @route   GET /api/tickets/hold/:id
+ * @access  Private
+ */
+export const getHoldById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid hold ID format',
+      });
+    }
+
+    await releaseExpiredHoldsInternal();
+
+    const ticket = await Ticket.findById(id).populate('event');
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ticket hold not found',
+      });
+    }
+
+    if (
+      req.user &&
+      ticket.user &&
+      ticket.user.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to view this hold',
+      });
+    }
+
+    const now = new Date();
+    const isExpired =
+      ticket.status === 'expired' ||
+      (ticket.status === 'held' && ticket.holdExpiresAt && now > new Date(ticket.holdExpiresAt));
+
+    const secondsRemaining =
+      ticket.status === 'held' && ticket.holdExpiresAt
+        ? Math.max(0, Math.floor((new Date(ticket.holdExpiresAt).getTime() - now.getTime()) / 1000))
+        : 0;
+
+    return res.json({
+      success: true,
+      hold: ticket,
+      ticket,
+      isExpired,
+      secondsRemaining,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Cancel an active hold, restoring ticket capacity back to the event
+ * @route   DELETE /api/tickets/hold/:id
+ * @access  Private
+ */
+export const cancelHold = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid hold ID format',
+      });
+    }
+
+    const ticket = await Ticket.findById(id);
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ticket hold not found',
+      });
+    }
+
+    if (
+      req.user &&
+      ticket.user &&
+      ticket.user.toString() !== req.user._id.toString() &&
+      req.user.role !== 'admin'
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to cancel this hold',
+      });
+    }
+
+    if (ticket.status !== 'held') {
+      return res.status(400).json({
+        success: false,
+        message: `Hold cannot be canceled because it is already '${ticket.status}'`,
+      });
+    }
+
+    if (ticket.holdExpiresAt && new Date() > new Date(ticket.holdExpiresAt)) {
+      await releaseExpiredHoldsInternal();
+      return res.status(400).json({
+        success: false,
+        message: 'Hold has already expired and tickets have been released',
+      });
+    }
+
+    const updatedTicket = await Ticket.findOneAndUpdate(
+      { _id: id, status: 'held' },
+      { $set: { status: 'canceled' } },
+      { new: true }
+    );
+
+    if (updatedTicket) {
+      await Event.findByIdAndUpdate(updatedTicket.event, {
+        $inc: { availableTickets: updatedTicket.quantity },
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Ticket hold canceled successfully. Capacity returned to event.',
+      ticket: updatedTicket,
     });
   } catch (error) {
     next(error);
@@ -430,10 +767,16 @@ export const getMyTickets = async (req, res, next) => {
 };
 
 export default {
+  createHold,
   createHoldAtomic,
   confirmTicketAtomic,
   releaseHoldAtomic,
+  releaseExpiredHolds,
+  getMyHolds,
+  getHoldById,
+  cancelHold,
+  saveContactInfo,
+  updateContactDetails,
   getTicketById,
   getMyTickets,
-  updateContactDetails,
 };
