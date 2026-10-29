@@ -85,7 +85,7 @@ async function runTests() {
       capacity: 50,
       availableTickets: 50,
       price: 150,
-      category: 'Conference',
+      category: 'tech', organizer: new mongoose.Types.ObjectId(),
       status: 'published',
     });
 
@@ -121,7 +121,7 @@ async function runTests() {
       capacity: 10,
       availableTickets: 1, // Only 1 ticket remaining
       price: 500,
-      category: 'Workshop',
+      category: 'tech', organizer: new mongoose.Types.ObjectId(),
       status: 'published',
     });
 
@@ -195,7 +195,7 @@ async function runTests() {
       capacity: 20,
       availableTickets: 20,
       price: 30,
-      category: 'Other',
+      category: 'other', organizer: new mongoose.Types.ObjectId(),
       status: 'published',
     });
 

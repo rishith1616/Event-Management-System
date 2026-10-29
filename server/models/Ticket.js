@@ -7,9 +7,19 @@ import mongoose from 'mongoose';
 
 const ticketSchema = new mongoose.Schema(
   {
+    event: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event',
+      required: false,
+    },
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
+      required: false,
+    },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: false,
     },
     userId: {
@@ -20,6 +30,12 @@ const ticketSchema = new mongoose.Schema(
     ticketHoldId: {
       type: String,
       default: () => new mongoose.Types.ObjectId().toString(),
+      index: true,
+    },
+    ticketId: {
+      type: String,
+      sparse: true,
+      unique: true,
       index: true,
     },
     quantity: {
@@ -39,13 +55,23 @@ const ticketSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['held', 'pending', 'confirmed', 'cancelled', 'expired'],
+      enum: ['held', 'pending', 'confirmed', 'cancelled', 'canceled', 'expired', 'refunded'],
       default: 'held',
       index: true,
     },
     holdExpiresAt: {
       type: Date,
       default: () => new Date(Date.now() + 10 * 60 * 1000), // 10 minutes hold
+    },
+    payment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Payment',
+    },
+    confirmedAt: {
+      type: Date,
+    },
+    canceledAt: {
+      type: Date,
     },
     // Attendee Contact Details (validated per FR-05)
     contactName: {
@@ -69,6 +95,15 @@ const ticketSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Pre-save hook to synchronize event/eventId and user/userId
+ticketSchema.pre('save', function (next) {
+  if (this.event && !this.eventId) this.eventId = this.event;
+  if (this.eventId && !this.event) this.event = this.eventId;
+  if (this.user && !this.userId) this.userId = this.user;
+  if (this.userId && !this.user) this.user = this.userId;
+  next();
+});
 
 // Index to quickly find held tickets and enforce expiration logic
 ticketSchema.index({ status: 1, holdExpiresAt: 1 });
