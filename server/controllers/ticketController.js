@@ -67,7 +67,7 @@ export const createHold = async (req, res, next) => {
     await releaseExpiredHoldsInternal();
 
     // Verify the event exists and check status
-    const event = await Event.findById(eventId);
+    const event = await Event.findById(eventId).populate('organizer');
     if (!event) {
       return res.status(404).json({
         success: false,
@@ -75,10 +75,19 @@ export const createHold = async (req, res, next) => {
       });
     }
 
-    if (event.status === 'suspended') {
-      return res.status(400).json({
+    if (event.status === 'suspended' || event.isSuspended) {
+      return res.status(403).json({
         success: false,
-        message: 'This event has been suspended',
+        message: 'This event has been suspended by platform administration. Ticket sales are disabled.',
+        isSuspended: true,
+      });
+    }
+
+    if (event.organizer && event.organizer.isSuspended) {
+      return res.status(403).json({
+        success: false,
+        message: 'The organizer of this event has been suspended. Ticket sales are disabled.',
+        isSuspended: true,
       });
     }
 

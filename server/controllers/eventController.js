@@ -310,14 +310,21 @@ export const getMyEvents = async (req, res, next) => {
  */
 export const getEvents = async (req, res, next) => {
   try {
-    const events = await Event.find({ status: 'published' })
-      .populate('organizer', 'name email')
+    // Acceptance criteria (Pass): Suspension removes public listings instantly
+    const events = await Event.find({
+      status: 'published',
+      isSuspended: { $ne: true },
+    })
+      .populate('organizer', 'name email isSuspended')
       .sort({ date: 1 });
+
+    // Exclude events whose organizer is suspended
+    const activeEvents = events.filter((e) => !e.organizer || !e.organizer.isSuspended);
 
     return res.status(200).json({
       success: true,
-      count: events.length,
-      events,
+      count: activeEvents.length,
+      events: activeEvents,
     });
   } catch (error) {
     next(error);
