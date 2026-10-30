@@ -33,6 +33,30 @@ function MyEvents() {
     fetchMyEvents();
   }, []);
 
+
+  const handleDownloadManifest = async (eventId, eventTitle) => {
+    try {
+      setActionLoading((prev) => ({ ...prev, [`manifest_${eventId}`]: true }));
+      const res = await api.get(`/events/${eventId}/manifest`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      const safeTitle = (eventTitle || 'event').replace(/[^a-zA-Z0-9_-]/g, '_');
+      link.setAttribute('download', `attendee-manifest-${safeTitle}-${eventId.slice(-6)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download attendee manifest:', err);
+      alert(err.response?.data?.message || 'Failed to download manifest. Please ensure you are authorized.');
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [`manifest_${eventId}`]: false }));
+    }
+  };
+
   const handlePublish = async (eventId) => {
     try {
       setActionLoading((prev) => ({ ...prev, [eventId]: true }));
@@ -178,6 +202,18 @@ function MyEvents() {
                   >
                     Edit
                   </button>
+
+                  <button
+                    type="button"
+                    className="btn"
+                    style={{ backgroundColor: '#0284c7', color: '#fff', fontSize: '0.875rem' }}
+                    onClick={() => handleDownloadManifest(event._id, event.title)}
+                    disabled={actionLoading[`manifest_${event._id}`]}
+                    title="Download confirmed attendees list as CSV (FR-08)"
+                  >
+                    {actionLoading[`manifest_${event._id}`] ? 'Exporting...' : '📥 Manifest (CSV)'}
+                  </button>
+
 
                   {event.status === 'draft' && (
                     <button

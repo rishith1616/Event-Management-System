@@ -12,6 +12,32 @@ const OrganizerDashboard = () => {
   const [myEvents, setMyEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
+
+  const [downloadingId, setDownloadingId] = useState(null);
+
+  const handleDownloadManifest = async (eventId, eventTitle) => {
+    try {
+      setDownloadingId(eventId);
+      const res = await api.get(`/events/${eventId}/manifest`, {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
+      const link = document.createElement('a');
+      link.href = url;
+      const safeTitle = (eventTitle || 'event').replace(/[^a-zA-Z0-9_-]/g, '_');
+      link.setAttribute('download', `attendee-manifest-${safeTitle}-${eventId.slice(-6)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download manifest:', err);
+      alert(err.response?.data?.message || 'Failed to download manifest.');
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
   useEffect(() => {
     const fetchMyEvents = async () => {
       try {
@@ -97,6 +123,17 @@ const OrganizerDashboard = () => {
                   >
                     {evt.status}
                   </span>
+                  
+                  <button
+                    onClick={() => handleDownloadManifest(evt._id, evt.title)}
+                    disabled={downloadingId === evt._id}
+                    className="btn btn-sm"
+                    style={{ backgroundColor: '#0284c7', color: '#fff', padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                    title="Download attendee manifest CSV"
+                  >
+                    {downloadingId === evt._id ? 'Exporting...' : '📥 Manifest'}
+                  </button>
+
                   <Link to={`/events/edit/${evt._id}`} className="btn btn-sm btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', textDecoration: 'none' }}>
                     Edit
                   </Link>

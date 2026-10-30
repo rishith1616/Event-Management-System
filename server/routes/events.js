@@ -10,6 +10,7 @@ import {
   getMyEvents,
   getEvents,
   getEventById,
+  getAttendeeManifest,
 } from '../controllers/eventController.js';
 import auth from '../middleware/auth.js';
 import roleCheck from '../middleware/roleCheck.js';
@@ -34,6 +35,10 @@ router.put('/:id', auth, roleCheck('organizer'), updateEvent);
 router.patch('/:id/publish', auth, roleCheck('organizer'), publishEvent);
 
 // ── Public Single Event Route ────────────────────────────────────
+
+// GET /api/events/:id/manifest — Export attendee manifest CSV (FR-08)
+router.get('/:id/manifest', auth, getAttendeeManifest);
+
 // GET /api/events/:id — Get event details
 router.get('/:id', getEventById);
 

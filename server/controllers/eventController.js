@@ -3,6 +3,7 @@
  * Handles event creation, draft updates, publishing, and organizer listings.
  */
 import Event from '../models/Event.js';
+import Ticket from '../models/Ticket.js';
 
 /**
  * @desc    Create a new event (draft)
@@ -343,6 +344,106 @@ export const getEventById = async (req, res, next) => {
       success: true,
       event,
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * @desc    Export attendee manifest for an event as CSV (FR-08)
+ * @route   GET /api/events/:id/manifest
+ * @access  Private (Organizer of this event / Admin)
+ */
+export const getAttendeeManifest = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?._id || req.user?.id;
+    const userRole = req.user?.role;
+
+    const event = await Event.findById(id);
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Event not found',
+      });
+    }
+
+    // Verify requesting user is the organizer of the event or platform admin
+    const organizerId = event.organizer?._id?.toString() || event.organizer?.toString();
+    if (organizerId !== userId?.toString() && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied: You can only download attendee manifests for events you organize',
+      });
+    }
+
+    // Acceptance Criteria: "the CSV includes only paid, confirmed attendees. Canceled tickets appear as active -> FAIL"
+    const confirmedTickets = await Ticket.find({
+      $or: [{ event: id }, { eventId: id }],
+      status: 'confirmed',
+    })
+      .populate('user', 'name email')
+      .sort({ createdAt: 1 });
+
+    if (req.query.format === 'json') {
+      return res.status(200).json({
+        success: true,
+        count: confirmedTickets.length,
+        tickets: confirmedTickets,
+      });
+    }
+
+    // Build RFC-4180 compliant CSV
+    const headers = [
+      'Ticket ID',
+      'Attendee Name',
+      'Attendee Email',
+      'Contact Phone',
+      'Seats Reserved',
+      'Unit Price ($)',
+      'Total Paid ($)',
+      'Booking Date',
+      'Status',
+    ];
+
+    const escapeCsv = (str) => {
+      if (str === null || str === undefined) return '""';
+      const val = String(str);
+      return `"${val.replace(/"/g, '""')}"`;
+    };
+
+    const rows = confirmedTickets.map((t) => {
+      const ticketId = t.ticketId || t._id.toString();
+      const name = t.contactName || t.user?.name || 'Valued Attendee';
+      const email = t.contactEmail || t.user?.email || '';
+      const phone = t.contactPhone || '';
+      const quantity = t.quantity || 1;
+      const unitPrice = Number(t.unitPrice || event.price || 0).toFixed(2);
+      const totalAmount = Number(t.totalAmount || (t.quantity * (t.unitPrice || event.price || 0))).toFixed(2);
+      const bookingDate = t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString();
+      const status = t.status;
+
+      return [
+        escapeCsv(ticketId),
+        escapeCsv(name),
+        escapeCsv(email),
+        escapeCsv(phone),
+        quantity,
+        unitPrice,
+        totalAmount,
+        escapeCsv(bookingDate),
+        escapeCsv(status),
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\r\n');
+    const safeTitle = event.title.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const filename = `manifest-${safeTitle}-${id.slice(-6)}.csv`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.status(200).send(csvContent);
   } catch (error) {
     next(error);
   }
