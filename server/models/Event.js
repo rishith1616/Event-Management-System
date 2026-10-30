@@ -69,6 +69,19 @@ const eventSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'Organizer is required'],
     },
+    isSuspended: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    suspensionReason: {
+      type: String,
+      default: '',
+    },
+    suspendedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

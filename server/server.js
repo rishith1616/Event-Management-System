@@ -10,6 +10,7 @@ import authRoutes from './routes/auth.js';
 import eventRoutes from './routes/events.js';
 import ticketRoutes from './routes/tickets.js';
 import paymentRoutes from './routes/payments.js';
+import adminRoutes from './routes/admin.js';
 import errorHandler from './middleware/errorHandler.js';
 
 dotenv.config();
@@ -31,7 +32,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/tickets', ticketRoutes);
 app.use('/api/payments', paymentRoutes);
-// app.use('/api/admin',    adminRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ── Error Handler ────────────────────────────────────────────────
 app.use(errorHandler);

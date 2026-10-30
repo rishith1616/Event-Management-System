@@ -35,6 +35,19 @@ const userSchema = new mongoose.Schema({
     },
     default: 'attendee',
   },
+  isSuspended: {
+    type: Boolean,
+    default: false,
+    index: true,
+  },
+  suspensionReason: {
+    type: String,
+    default: '',
+  },
+  suspendedAt: {
+    type: Date,
+    default: null,
+  },
   createdAt: {
     type: Date,
     default: Date.now,
