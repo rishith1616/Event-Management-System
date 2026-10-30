@@ -8,6 +8,7 @@ import Ticket from '../models/Ticket.js';
 import Event from '../models/Event.js';
 import Payment from '../models/Payment.js';
 import { withTransaction } from '../services/transactionService.js';
+import { getActiveProvider } from '../services/paymentGateway.js';
 
 /**
  * Internal helper to automatically release expired holds and restore capacity to events
@@ -749,6 +750,128 @@ export const getTicketById = async (req, res, next) => {
  * @route   GET /api/tickets/my-tickets
  * @access  Private
  */
+
+/**
+ * @desc    Cancel a confirmed ticket, process refund, and restore event inventory (FR-07)
+ * @route   POST /api/tickets/:id/cancel
+ * @access  Private (Attendee / Admin)
+ */
+export const cancelTicketAndRefund = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const { reason = 'Attendee requested cancellation' } = req.body || {};
+    const userId = req.user?._id || req.user?.id;
+    const userRole = req.user?.role;
+
+    const ticket = await Ticket.findById(id).populate('event');
+    if (!ticket) {
+      return res.status(404).json({
+        success: false,
+        message: 'Ticket not found',
+      });
+    }
+
+    // Verify ownership or admin privilege
+    const ticketUserId = ticket.user?._id?.toString() || ticket.user?.toString() || ticket.userId?.toString();
+    if (ticketUserId && ticketUserId !== userId?.toString() && userRole !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'You are not authorized to cancel this ticket',
+      });
+    }
+
+    // Check if already cancelled
+    if (['cancelled', 'canceled', 'refunded'].includes(ticket.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'This ticket has already been canceled',
+      });
+    }
+
+    const event = ticket.event;
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: 'Associated event not found',
+      });
+    }
+
+    // Check if event has already occurred
+    if (event.date && new Date(event.date) < new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot cancel a ticket for an event that has already occurred',
+      });
+    }
+
+    // Process refund via Payment Gateway if totalAmount > 0
+    let refundResult = null;
+    const refundAmount = ticket.totalAmount || (ticket.unitPrice * ticket.quantity) || 0;
+
+    if (refundAmount > 0) {
+      const activeProvider = getActiveProvider();
+      let transactionId = null;
+
+      if (ticket.payment) {
+        const paymentDoc = await Payment.findById(ticket.payment);
+        if (paymentDoc) {
+          transactionId = paymentDoc.transactionId;
+        }
+      }
+
+      if (!transactionId) {
+        transactionId = `txn_${ticket.ticketId || ticket._id}`;
+      }
+
+      refundResult = await activeProvider.refund(transactionId, refundAmount);
+
+      // Update payment record if exists
+      if (ticket.payment) {
+        await Payment.findByIdAndUpdate(ticket.payment, {
+          status: 'refunded',
+          refundId: refundResult.refundId,
+          refundAmount: refundAmount,
+          refundedAt: new Date(),
+        });
+      }
+    }
+
+    // Void ticket and set status to 'cancelled'
+    ticket.status = 'cancelled';
+    ticket.canceledAt = new Date();
+    ticket.cancellationReason = reason;
+    if (refundResult) {
+      ticket.refundId = refundResult.refundId;
+      ticket.refundAmount = refundAmount;
+      ticket.refundedAt = new Date();
+    }
+    await ticket.save();
+
+    // Restore available tickets back to event inventory (FR-07 acceptance criteria)
+    await Event.findByIdAndUpdate(event._id, {
+      $inc: { availableTickets: ticket.quantity },
+    });
+
+    const updatedEvent = await Event.findById(event._id);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Ticket successfully canceled, refund processed, and seat returned to inventory',
+      data: {
+        ticket,
+        refund: refundResult,
+        event: {
+          id: updatedEvent._id,
+          title: updatedEvent.title,
+          availableTickets: updatedEvent.availableTickets,
+        },
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 export const getMyTickets = async (req, res, next) => {
   try {
     const userId = req.user?._id || req.user?.id;
@@ -779,4 +902,5 @@ export default {
   updateContactDetails,
   getTicketById,
   getMyTickets,
+  cancelTicketAndRefund,
 };

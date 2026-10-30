@@ -15,6 +15,7 @@ import {
   updateContactDetails,
   getMyTickets,
   getTicketById,
+  cancelTicketAndRefund,
 } from '../controllers/ticketController.js';
 import { validateContact } from '../middleware/validators.js';
 import auth from '../middleware/auth.js';
@@ -97,5 +98,14 @@ router.post('/release-expired', releaseExpiredHolds);
  * @access  Private
  */
 router.get('/:id', auth, getTicketById);
+
+/**
+ * @route   POST /api/tickets/:id/cancel
+ * @desc    Cancel a confirmed ticket, refund payment, and restore seat capacity (FR-07)
+ * @access  Private (Attendee / Admin)
+ */
+router.post('/:id/cancel', auth, cancelTicketAndRefund);
+router.delete('/:id/cancel', auth, cancelTicketAndRefund);
+
 
 export default router;

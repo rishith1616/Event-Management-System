@@ -73,6 +73,22 @@ const ticketSchema = new mongoose.Schema(
     canceledAt: {
       type: Date,
     },
+    cancellationReason: {
+      type: String,
+      default: '',
+    },
+    refundId: {
+      type: String,
+      default: null,
+    },
+    refundAmount: {
+      type: Number,
+      default: null,
+    },
+    refundedAt: {
+      type: Date,
+      default: null,
+    },
     // Attendee Contact Details (validated per FR-05)
     contactName: {
       type: String,
