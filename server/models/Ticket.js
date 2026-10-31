@@ -123,6 +123,9 @@ ticketSchema.pre('save', function (next) {
 
 // Index to quickly find held tickets and enforce expiration logic
 ticketSchema.index({ status: 1, holdExpiresAt: 1 });
+// NFR-01: Performance indexes for high-throughput ticket lookups
+ticketSchema.index({ event: 1, status: 1 });
+ticketSchema.index({ user: 1, status: 1 });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 
