@@ -268,6 +268,14 @@
   color: #1d4ed8;
 }
 
+.payment-card-layout {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  width: 100%;
+}
+
 .credit-card-preview {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
   color: #ffffff;
@@ -376,22 +384,150 @@
   background: #fef2f2;
 }
 
-/* Responsive */
+
+/* ==========================================================================
+   NFR-04: Mobile-First Checkout UX Enhancements
+   Ensures 0 horizontal scroll, minimum 48px touch targets, mobile card scaling,
+   and fluid single-column checkout flow on small viewports (<= 640px and <= 480px).
+   ========================================================================== */
+
 @media (max-width: 640px) {
+  .checkout-container {
+    padding: 0 0.75rem;
+    margin: 1rem auto;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .checkout-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .checkout-subtitle {
+    font-size: 0.9rem;
+  }
+
+  /* Compact Horizontal Touch Stepper */
   .checkout-steps {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 0.75rem 0.5rem;
+    border-radius: 8px;
+    gap: 0.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .checkout-step {
+    font-size: 0.75rem;
+    gap: 0.35rem;
+    white-space: nowrap;
+  }
+
+  .step-number {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  /* Form & Card Full Width on Mobile */
+  .checkout-form-card,
+  .event-summary-card,
+  .hold-timer-card {
+    padding: 1.1rem 1rem;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Credit Card Preview responsive scaling */
+  .credit-card-preview {
+    max-width: 100%;
+    width: 100%;
+    padding: 1.15rem;
+    box-sizing: border-box;
+  }
+
+  .cc-number {
+    font-size: 1.05rem;
+    letter-spacing: 1.5px;
+    margin-bottom: 0.75rem;
+  }
+
+  .cc-chip {
+    width: 34px;
+    height: 24px;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Form input optimization: 48px touch targets & 16px font to stop iOS zoom */
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  select {
+    font-size: 16px !important;
+    min-height: 48px;
+    padding: 0.75rem;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Thumb-friendly Full-Width Action Buttons (min 48px height) */
+  .form-actions {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+    width: 100%;
+  }
+
+  .form-actions > div {
+    width: 100%;
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
     gap: 0.75rem;
   }
-  .step-divider {
-    display: none;
+
+  .form-actions .btn,
+  .btn-large,
+  .btn-primary,
+  .btn-secondary,
+  .btn-outline-danger {
+    min-height: 48px;
+    font-size: 1rem;
+    font-weight: 600;
+    width: 100% !important;
+    padding: 0.85rem 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
-  .form-actions {
+
+  /* Hold Timer Bar on Mobile */
+  .hold-timer-content {
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
-  .form-actions .btn {
-    width: 100%;
-    text-align: center;
+
+  .timer-clock {
+    font-size: 1.5rem;
   }
 }
+
+@media (max-width: 380px) {
+  .checkout-step span:not(.step-number) {
+    display: none; /* Icon/number only for ultra-narrow screens like 320px */
+  }
+
+  .ticket-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

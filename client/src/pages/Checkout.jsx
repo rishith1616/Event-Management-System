@@ -566,7 +566,7 @@ const Checkout = () => {
             🔒 <strong>Demo Payment Gateway:</strong> Payment capture is simulated for FR-04. Full gateway tokenization is implemented in FR-06.
           </div>
 
-          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+          <div className="payment-card-layout">
             <div className="credit-card-preview">
               <div className="cc-chip" />
               <div className="cc-number">{cardNumber}</div>
