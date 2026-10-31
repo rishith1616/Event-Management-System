@@ -96,6 +96,11 @@ eventSchema.pre('save', function (next) {
   next();
 });
 
+
+// NFR-01: Compound indexes for high-throughput concurrency and sub-second flash sale lookups
+eventSchema.index({ status: 1, isSuspended: 1, date: 1 });
+eventSchema.index({ _id: 1, availableTickets: 1 });
+
 const Event = mongoose.model('Event', eventSchema);
 
 export default Event;
