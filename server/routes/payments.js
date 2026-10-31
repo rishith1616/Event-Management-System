@@ -10,6 +10,7 @@ import {
   processPayment,
   processRefund,
   getProviderInfo,
+  auditPciStorage,
 } from '../controllers/paymentController.js';
 import { auth, admin } from '../middleware/auth.js';
 
@@ -35,5 +36,13 @@ router.post('/:id/refund', auth, processRefund);
  * @access  Private/Admin (auth + admin required)
  */
 router.get('/provider-info', auth, admin, getProviderInfo);
+
+/**
+ * @route   GET /api/payments/pci-audit
+ * @desc    Run PCI-DSS compliance storage audit
+ * @access  Private
+ */
+router.get('/pci-audit', auth, auditPciStorage);
+
 
 export default router;
