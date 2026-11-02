@@ -76,8 +76,18 @@ npm run dev
 │       ├── pages/       # Page-level components
 │       ├── context/     # React context providers
 │       └── services/    # API service layer
+├── docs/                # Deliverable reports (PDFs)
 └── documents/           # Project documentation
 ```
+
+## Documentation & Testing (Part-3 Deliverables)
+
+- [Updated Test Cases](docs/TestCases_Updated.pdf)
+- [Unit Test Report](docs/Unit_Test_Report.pdf)
+- [System Validation Report](docs/System_Validation_Report.pdf)
+- [Code Coverage Report](docs/Code_Coverage_Report.pdf)
+- [Branch Coverage Report](docs/Branch_Coverage_Report.pdf)
+- [Sprint-3 Report](docs/Sprint_3_Report.pdf)
 
 ## Team
 
