@@ -16,7 +16,7 @@ def build_sad():
     replacements = {
         "Project: ATM System": "Project: PES EventFlow — Campus Event Management & Ticketing System",
         "Version: 1.0": "Version: 1.0",
-        "Authors: Example Team": "Authors: Jayanth Kumar P (SRN: PES1UG24CS199), Kartik Naik, Rishit K",
+        "Authors: Example Team": "Authors: Jayanth Kumar P, Kartik Naik, Rishit K",
         "Date: 09-09-2025": "Date: 19-11-2026",
         "Status: Draft": "Status: Final / Approved",
         "Version | Date | Author | Change Summary": "Version | Date | Author | Change Summary\n1.0 | 19-11-2026 | Jayanth Kumar P, Kartik Naik, Rishit K | Final Software Architecture and Design Specification for PES EventFlow",
@@ -100,7 +100,7 @@ def build_srs():
         "Software Requirements Specification (SRS) Template":
             "Software Requirements Specification (SRS)",
         "Project: Automated Teller Machine (ATM) System\nVersion: 1.0\nAuthors: < Instructor / Student>\nDate: 18-08-2025\nStatus: Model Answer / Approved":
-            "Project: PES EventFlow — Campus Event Management & Ticketing System\nVersion: 1.0\nAuthors: Jayanth Kumar P (SRN: PES1UG24CS199), Kartik Naik, Rishit K\nDate: 19-11-2026\nStatus: Final Model Submission / Approved",
+            "Project: PES EventFlow — Campus Event Management & Ticketing System\nVersion: 1.0\nAuthors: Jayanth Kumar P, Kartik Naik, Rishit K\nDate: 19-11-2026\nStatus: Final Model Submission / Approved",
         "This document is a Software Requirements Specification (SRS) for an Automated Teller Machine (ATM) system. It defines functional and non-functional requirements, interfaces, and verification criteria intended for instructors and students to use as a reference.":
             "This document is a Software Requirements Specification (SRS) for PES EventFlow, the official campus event ticketing, hold reservation, and seating management platform for PES University. It defines functional and non-functional requirements, interfaces, and verification criteria.",
         "Covers user interactions at ATM terminals, integration with bank core systems for account operations and transaction settlement, maintenance functions, and operational monitoring. Excludes core banking internal implementation beyond APIs and bank branch activities.":
@@ -114,7 +114,7 @@ def build_srs():
         "- Authenticate user\n- Cash withdrawal\n- Balance inquiry\n- Funds transfer (within same bank)\n- Cash deposit (envelope / bulk note acceptor)\n- Mini-statement and receipt printing\n- Administrative maintenance and health checks\n- Offline transaction queuing and reconciliation (limited capability)":
             "- Authenticate student, organizer, and admin via JWT with verified PES SRN linkage\n- Multi-tier campus event creation with seating sections (VIP, Fast Pass, General, Balcony)\n- Real-time catalog search and category filtering (Hackathons, Fests, Cultural, Sports)\n- Atomic 10-minute ticket hold reservation with visual countdown timer\n- Attendee verification enforcing valid 10-digit Indian mobile and PES SRN format\n- Tokenized INR checkout with masked card persistence (**** **** **** 1234)\n- Digital entry pass minting into student pass wallet with QR reference\n- Self-service ticket cancellation, capacity restoration, and automated refunds\n- Authorized RFC-4180 attendee manifest CSV download for event hosts\n- Administrative content moderation and instant fraudulent event suspension\n- Automated inventory sweeper restoring timed-out abandoned holds",
         "- Customer: basic banking knowledge, expects short transaction times and clarity. \n- Technician: limited time on-site, needs diagnostic UIs and logs.\n- Bank Operator: remote monitoring and settlement responsibilities.":
-            "- Student Attendee: PES student (e.g. Jayanth Kumar P, PES1UG24CS199); expects instant booking, clear hold timers, and digital passes.\n- Event Organizer: Student Affairs / Club Council Lead; manages venue tiers and downloads attendee rosters.\n- Platform Administrator: Dean of Student Affairs; oversees campus-wide events, audits logs, and suspends bad organizers.",
+            "- Student Attendee: PES student (e.g. Jayanth Kumar P); expects instant booking, clear hold timers, and digital passes.\n- Event Organizer: Student Affairs / Club Council Lead; manages venue tiers and downloads attendee rosters.\n- Platform Administrator: Dean of Student Affairs; oversees campus-wide events, audits logs, and suspends bad organizers.",
         "Embedded ATM OS, secure network (public or private WAN), power with UPS, environmental constraints (temperature/humidity).":
             "Web browsers (Chrome 110+, Edge 110+, Safari 16+, Firefox 110+), Node.js 22 LTS, MongoDB 7.0+ Replica Set supporting ACID sessions.",
         "EMV compliance, PCI-DSS considerations for cardholder data, use of approved crypto modules, hardware vendor APIs for dispenser module.":
@@ -185,7 +185,7 @@ def build_srs():
             t1.rows[1].cells[3].text = "19-11-2026"
         
         team_members = [
-            ("Lead Student Architect", "Jayanth Kumar P (PES1UG24CS199)", "jayanthkumar08p@gmail.com", "19-11-2026"),
+            ("Lead Student Architect", "Jayanth Kumar P", "jayanthkumar08p@gmail.com", "19-11-2026"),
             ("Student Co-Author", "Kartik Naik", "kartikmnaik222@gmail.com", "19-11-2026"),
             ("Student Co-Author", "Rishit K", "rishith1616@gmail.com", "19-11-2026")
         ]
@@ -322,7 +322,7 @@ def build_stp():
         "Software Test Plan (STP) - ATM System (Sample)":
             "Software Test Plan (STP) - PES EventFlow",
         "Project: Automated Teller Machine (ATM) System\nVersion: 1.0\nAuthors: <QA Team>\nDate: 31-08-2025\nStatus: Sample / Draft":
-            "Project: PES EventFlow — Campus Event Management & Ticketing System\nVersion: 1.0\nAuthors: Jayanth Kumar P (SRN: PES1UG24CS199), Kartik Naik, Rishit K\nDate: 19-11-2026\nStatus: Final Approved (100% Pass Verified)",
+            "Project: PES EventFlow — Campus Event Management & Ticketing System\nVersion: 1.0\nAuthors: Jayanth Kumar P, Kartik Naik, Rishit K\nDate: 19-11-2026\nStatus: Final Approved (100% Pass Verified)",
         "Purpose: This document defines the test plan for the ATM System v1.0. It outlines objectives, scope, strategy, resources, schedule, and responsibilities for testing.\n\nScope: Testing covers ATM features such as authentication, cash withdrawal, balance inquiry, deposit, and fund transfer. Hardware maintenance and core banking system internals are excluded.\n\nReferences: ATM SRS v1.0, Design Specifications v1.0, Banking Standards, PCI-DSS.\n\nDefinitions: ATM (Automated Teller Machine), PIN (Personal Identification Number), SRS (Software Requirements Specification), RTM (Requirements Traceability Matrix).":
             "Purpose: This document defines the comprehensive software test plan for PES EventFlow v1.0. It outlines objectives, scope, test strategy, concurrency load benchmarks, PCI-DSS audits, and verification responsibilities.\n\nScope: Testing covers all 15 functional requirements (FR-01 to FR-15) and 5 non-functional requirements (NFR-01 to NFR-05) spanning authentication, 10-minute ticket holds, 50-buyer flash sale concurrency, tokenized checkout, attendee manifests, and admin suspensions.\n\nReferences: PES EventFlow SRS v1.0, SAD v1.0, PCI-DSS v4.0 Requirement 3.\n\nDefinitions: ACID, PES SRN (Student Registration Number), PAN (Primary Account Number), RTM (Requirements Traceability Matrix), TAP (Test Anything Protocol).",
         "- ATM Authentication module\n- Cash withdrawal module\n- Balance inquiry module\n- Deposit module\n- Fund transfer module\n- Admin/maintenance interface":
@@ -359,7 +359,7 @@ def build_stp():
     if len(doc.tables) > 0:
         t0 = doc.tables[0]
         roles_data = [
-            ("Lead Architect & QA Lead", "Jayanth Kumar P (PES1UG24CS199)", "Prepare test plan, design concurrency harness, execute tests, sign off"),
+            ("Lead Architect & QA Lead", "Jayanth Kumar P", "Prepare test plan, design concurrency harness, execute tests, sign off"),
             ("Backend & Security Engineer", "Kartik Naik", "Author test suites, execute PCI-DSS audit scans, verify 100% pass rate"),
             ("Full-Stack & DevOps Engineer", "Rishit K", "CI/CD automated merge pipelines, ticket schema synchronization, triage test failures"),
             ("Course Faculty Evaluator", "Faculty Evaluation Committee", "Review test plan, verify test execution logs, approve final deliverables")
@@ -392,7 +392,7 @@ def build_stp():
     if len(doc.tables) > 2:
         t2 = doc.tables[2]
         app_data = [
-            ("Lead Author & QA Lead", "Jayanth Kumar P (PES1UG24CS199)", "APPROVED — 100% Pass (64/64 Suites) / 19-Nov-2026"),
+            ("Lead Author & QA Lead", "Jayanth Kumar P", "APPROVED — 100% Pass (64/64 Suites) / 19-Nov-2026"),
             ("Student Co-Author", "Kartik Naik", "APPROVED / 19-Nov-2026"),
             ("Student Co-Author", "Rishit K", "APPROVED / 19-Nov-2026"),
             ("SE Course Faculty Evaluator", "Faculty Evaluation Committee, Dept of CSE", "VERIFIED & ACCEPTED / 19-Nov-2026")
