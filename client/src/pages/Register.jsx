@@ -1,11 +1,12 @@
 /**
- * pages/Register.jsx — User registration page
+ * pages/Register.jsx — Modern User Registration Page
  * Allows new users to create an account with role selection (Organizer or Attendee).
  * Redirects user to their role-specific dashboard upon successful registration.
  */
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { BrandLogo, UsersIcon, TicketIcon, SparklesIcon, CheckCircleIcon } from '../components/Icons';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -30,16 +31,15 @@ const Register = () => {
     setError('');
   };
 
+  const handleRoleSelect = (selectedRole) => {
+    setFormData((prev) => ({ ...prev, role: selectedRole }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!name || !email || !password) {
       setError('Please fill in all required fields');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
       return;
     }
 
@@ -51,8 +51,6 @@ const Register = () => {
       // Route to role-specific dashboard on success
       if (user.role === 'organizer') {
         navigate('/dashboard/organizer');
-      } else if (user.role === 'admin') {
-        navigate('/dashboard/admin');
       } else {
         navigate('/dashboard/attendee');
       }
@@ -66,17 +64,50 @@ const Register = () => {
   };
 
   return (
-    <div className="container auth-container">
-      <div className="card auth-card">
-        <h2 style={{ marginBottom: '1rem', textAlign: 'center' }}>Create Account</h2>
-        <p style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#666' }}>
-          Choose your role to get started with the Event Management System
-        </p>
+    <div className="auth-page-wrapper">
+      <div className="auth-card-modern card" style={{ maxWidth: '520px' }}>
+        <div className="auth-brand-header">
+          <BrandLogo style={{ width: '40px', height: '40px', marginBottom: '12px' }} />
+          <h2 className="auth-title">Create Your Account</h2>
+          <p className="auth-subtitle">
+            Join thousands of attendees and event organizers on EventFlow
+          </p>
+        </div>
 
-        {error && <div className="error-text alert-error">{error}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
+        <form onSubmit={handleSubmit} className="auth-form-modern">
+          {/* Visual Role Selector */}
+          <div className="form-group-modern">
+            <label>I want to join as an:</label>
+            <div className="role-selector-grid">
+              <div
+                className={`role-option-card ${role === 'attendee' ? 'role-selected' : ''}`}
+                onClick={() => handleRoleSelect('attendee')}
+              >
+                <div className="role-card-header">
+                  <TicketIcon style={{ color: '#6366f1', fontSize: '1.25rem' }} />
+                  {role === 'attendee' && <CheckCircleIcon style={{ color: '#6366f1' }} />}
+                </div>
+                <h4>Attendee</h4>
+                <p>Browse events, hold seats, and manage tickets</p>
+              </div>
+
+              <div
+                className={`role-option-card ${role === 'organizer' ? 'role-selected' : ''}`}
+                onClick={() => handleRoleSelect('organizer')}
+              >
+                <div className="role-card-header">
+                  <SparklesIcon style={{ color: '#8b5cf6', fontSize: '1.25rem' }} />
+                  {role === 'organizer' && <CheckCircleIcon style={{ color: '#8b5cf6' }} />}
+                </div>
+                <h4>Organizer</h4>
+                <p>Host events, manage capacity, and track sales</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="form-group-modern">
             <label htmlFor="name">Full Name</label>
             <input
               type="text"
@@ -84,12 +115,13 @@ const Register = () => {
               name="name"
               value={name}
               onChange={handleChange}
-              placeholder="Enter your full name"
+              placeholder="e.g. John Doe"
               required
+              className="modern-text-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group-modern">
             <label htmlFor="email">Email Address</label>
             <input
               type="email"
@@ -97,12 +129,13 @@ const Register = () => {
               name="email"
               value={email}
               onChange={handleChange}
-              placeholder="Enter your email"
+              placeholder="e.g. john@example.com"
               required
+              className="modern-text-input"
             />
           </div>
 
-          <div className="form-group">
+          <div className="form-group-modern">
             <label htmlFor="password">Password</label>
             <input
               type="password"
@@ -110,37 +143,24 @@ const Register = () => {
               name="password"
               value={password}
               onChange={handleChange}
-              placeholder="Minimum 6 characters"
-              minLength={6}
+              placeholder="At least 6 characters"
               required
+              minLength={6}
+              className="modern-text-input"
             />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="role">Register As</label>
-            <select
-              id="role"
-              name="role"
-              value={role}
-              onChange={handleChange}
-            >
-              <option value="attendee">Attendee</option>
-              <option value="organizer">Organizer</option>
-            </select>
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary"
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            className="btn btn-primary btn-block btn-auth-submit"
             disabled={submitting}
           >
-            {submitting ? 'Creating Account...' : 'Register'}
+            <span>{submitting ? 'Creating Account...' : 'Complete Registration'}</span>
           </button>
         </form>
 
-        <p style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.9rem' }}>
-          Already have an account? <Link to="/login">Login here</Link>
+        <p className="auth-footer-text">
+          Already have an account? <Link to="/login" className="auth-switch-link">Sign in here</Link>
         </p>
       </div>
     </div>

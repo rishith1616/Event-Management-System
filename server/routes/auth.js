@@ -3,7 +3,7 @@
  * Endpoints for user registration, login, and fetching current user profile.
  */
 import express from 'express';
-import { register, login, getMe } from '../controllers/authController.js';
+import { register, login, getMe, updateProfile } from '../controllers/authController.js';
 import protect from '../middleware/auth.js';
 
 const router = express.Router();
@@ -14,5 +14,7 @@ router.post('/login', login);
 
 // Protected routes
 router.get('/me', protect, getMe);
+router.put('/profile', protect, updateProfile);
+router.patch('/profile', protect, updateProfile);
 
 export default router;

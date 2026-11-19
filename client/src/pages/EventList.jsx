@@ -7,25 +7,42 @@ import { useSearchParams } from 'react-router-dom';
 import api from '../services/api';
 import EventCard from '../components/EventCard';
 import FilterBar from '../components/FilterBar';
+import { SearchIcon, SparklesIcon } from '../components/Icons';
 
 const EventList = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Initialize filters from searchParams or defaults
+  // Initialize filters from searchParams
+  const categoryParam = searchParams.get('category') || '';
+  const searchParam = searchParams.get('search') || '';
+  const sortParam = searchParams.get('sort') || 'date';
+  const pageParam = parseInt(searchParams.get('page'), 10) || 1;
+
   const [filters, setFilters] = useState({
-    search: searchParams.get('search') || '',
-    category: searchParams.get('category') || '',
+    search: searchParam,
+    category: categoryParam,
     startDate: searchParams.get('startDate') || '',
     endDate: searchParams.get('endDate') || '',
-    sort: searchParams.get('sort') || 'date',
+    sort: sortParam,
   });
 
-  const [page, setPage] = useState(parseInt(searchParams.get('page'), 10) || 1);
+  const [page, setPage] = useState(pageParam);
   const [events, setEvents] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Sync state if URL search params change (e.g. clicking category pill on home)
+  useEffect(() => {
+    setFilters((prev) => ({
+      ...prev,
+      search: searchParams.get('search') || '',
+      category: searchParams.get('category') || '',
+      sort: searchParams.get('sort') || 'date',
+    }));
+    setPage(parseInt(searchParams.get('page'), 10) || 1);
+  }, [searchParams]);
 
   // Fetch events from API
   const fetchEvents = useCallback(async () => {
@@ -39,7 +56,7 @@ const EventList = () => {
       };
 
       if (filters.search) params.search = filters.search;
-      if (filters.category && filters.category !== 'All') params.category = filters.category;
+      if (filters.category && filters.category !== 'All') params.category = filters.category.toLowerCase();
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
 
@@ -63,27 +80,20 @@ const EventList = () => {
     }
   }, [filters, page]);
 
-  // Trigger fetch when filters or page change
   useEffect(() => {
     fetchEvents();
   }, [fetchEvents]);
 
-  // Update query params in URL
-  useEffect(() => {
-    const nextParams = {};
-    if (filters.search) nextParams.search = filters.search;
-    if (filters.category && filters.category !== 'All') nextParams.category = filters.category;
-    if (filters.startDate) nextParams.startDate = filters.startDate;
-    if (filters.endDate) nextParams.endDate = filters.endDate;
-    if (filters.sort && filters.sort !== 'date') nextParams.sort = filters.sort;
-    if (page > 1) nextParams.page = page.toString();
-
-    setSearchParams(nextParams, { replace: true });
-  }, [filters, page, setSearchParams]);
-
   const handleApplyFilters = (newFilters) => {
-    setPage(1); // Reset to first page upon applying new filter
+    setPage(1);
     setFilters(newFilters);
+    const nextParams = {};
+    if (newFilters.search) nextParams.search = newFilters.search;
+    if (newFilters.category && newFilters.category !== 'All') nextParams.category = newFilters.category;
+    if (newFilters.startDate) nextParams.startDate = newFilters.startDate;
+    if (newFilters.endDate) nextParams.endDate = newFilters.endDate;
+    if (newFilters.sort && newFilters.sort !== 'date') nextParams.sort = newFilters.sort;
+    setSearchParams(nextParams, { replace: true });
   };
 
   const handleClearFilters = () => {
@@ -95,6 +105,7 @@ const EventList = () => {
       endDate: '',
       sort: 'date',
     });
+    setSearchParams({}, { replace: true });
   };
 
   const handlePageChange = (newPage) => {
@@ -106,11 +117,18 @@ const EventList = () => {
 
   return (
     <div className="event-list-page container">
-      <header className="page-header">
-        <h1>Discover Events</h1>
-        <p className="page-subtitle">
-          Find and book tickets for upcoming conferences, workshops, concerts, and more.
-        </p>
+      {/* Modern Catalog Header */}
+      <header className="catalog-header-modern">
+        <div className="catalog-header-text">
+          <span className="section-eyebrow">
+            <SparklesIcon style={{ marginRight: '6px' }} />
+            Explore What's Happening
+          </span>
+          <h1 className="catalog-title">PES Campus Events & Club Workshops</h1>
+          <p className="catalog-subtitle">
+            Explore Aatmatrisha passes, technical hackathons, dance battles, rock concerts, and club orientations across RR and EC campuses.
+          </p>
+        </div>
       </header>
 
       {/* Filter and Search Bar */}
@@ -120,11 +138,17 @@ const EventList = () => {
         onClearFilters={handleClearFilters}
       />
 
-      {/* Results Header */}
-      <div className="results-header">
+      {/* Results Meta Header */}
+      <div className="catalog-meta-bar">
         {!loading && (
-          <p className="results-count">
-            Showing <strong>{events.length}</strong> of <strong>{totalCount}</strong> upcoming {totalCount === 1 ? 'event' : 'events'}
+          <p className="catalog-count-text">
+            Showing <strong className="text-primary">{events.length}</strong> of <strong>{totalCount}</strong> published {totalCount === 1 ? 'event' : 'events'}
+            {filters.category && filters.category !== 'All' && (
+              <span className="active-filter-tag">in {filters.category}</span>
+            )}
+            {filters.search && (
+              <span className="active-filter-tag">matching "{filters.search}"</span>
+            )}
           </p>
         )}
       </div>
@@ -133,28 +157,30 @@ const EventList = () => {
       {error && (
         <div className="alert alert-error" role="alert">
           <p>{error}</p>
-          <button className="btn btn-secondary" onClick={fetchEvents}>
-            Retry
+          <button className="btn btn-secondary" onClick={fetchEvents} style={{ marginTop: '8px' }}>
+            Retry Loading
           </button>
         </div>
       )}
 
       {/* Loading State */}
       {loading && (
-        <div className="loading-state" aria-busy="true">
-          <div className="spinner"></div>
-          <p>Loading upcoming events...</p>
+        <div className="catalog-loading-box" aria-busy="true">
+          <div className="spinner-ring"></div>
+          <p>Discovering upcoming events...</p>
         </div>
       )}
 
       {/* Empty State */}
       {!loading && !error && events.length === 0 && (
-        <div className="empty-state card">
-          <div className="empty-state-icon">🔍</div>
-          <h3>No events found</h3>
-          <p>We couldn't find any active events matching your filter criteria.</p>
-          <button className="btn btn-primary" onClick={handleClearFilters}>
-            Clear Filters
+        <div className="empty-catalog-state card">
+          <div className="empty-icon-circle">
+            <SearchIcon style={{ fontSize: '2rem', color: '#6366f1' }} />
+          </div>
+          <h3>No events match your criteria</h3>
+          <p>Try adjusting your search keywords, clearing category filters, or selecting a broader date range.</p>
+          <button className="btn btn-primary" onClick={handleClearFilters} style={{ marginTop: '1rem' }}>
+            Reset All Filters
           </button>
         </div>
       )}
@@ -170,50 +196,31 @@ const EventList = () => {
 
       {/* Pagination Controls */}
       {!loading && !error && totalPages > 1 && (
-        <nav className="pagination-container" aria-label="Pagination">
+        <nav className="pagination-modern" aria-label="Pagination">
           <button
-            className="btn btn-pagination"
+            className="btn btn-pagination-nav"
             disabled={page <= 1}
             onClick={() => handlePageChange(page - 1)}
-            aria-label="Previous page"
           >
             ← Previous
           </button>
 
-          <div className="pagination-pages">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => {
-              // Only render nearby pages for clean pagination UI
-              if (
-                pageNum === 1 ||
-                pageNum === totalPages ||
-                (pageNum >= page - 2 && pageNum <= page + 2)
-              ) {
-                return (
-                  <button
-                    key={pageNum}
-                    className={`btn-page-number ${pageNum === page ? 'active' : ''}`}
-                    onClick={() => handlePageChange(pageNum)}
-                    aria-current={pageNum === page ? 'page' : undefined}
-                  >
-                    {pageNum}
-                  </button>
-                );
-              }
-              if (
-                (pageNum === page - 3 && pageNum > 1) ||
-                (pageNum === page + 3 && pageNum < totalPages)
-              ) {
-                return <span key={pageNum} className="pagination-ellipsis">...</span>;
-              }
-              return null;
-            })}
+          <div className="pagination-page-pills">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+              <button
+                key={pageNum}
+                className={`btn-page-pill ${pageNum === page ? 'pill-active' : ''}`}
+                onClick={() => handlePageChange(pageNum)}
+              >
+                {pageNum}
+              </button>
+            ))}
           </div>
 
           <button
-            className="btn btn-pagination"
+            className="btn btn-pagination-nav"
             disabled={page >= totalPages}
             onClick={() => handlePageChange(page + 1)}
-            aria-label="Next page"
           >
             Next →
           </button>

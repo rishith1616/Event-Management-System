@@ -35,6 +35,17 @@ const userSchema = new mongoose.Schema({
     },
     default: 'attendee',
   },
+  srn: {
+    type: String,
+    trim: true,
+    uppercase: true,
+    default: '',
+  },
+  phone: {
+    type: String,
+    trim: true,
+    default: '',
+  },
   isSuspended: {
     type: Boolean,
     default: false,

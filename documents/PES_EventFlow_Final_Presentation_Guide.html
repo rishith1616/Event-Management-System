@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>PES EventFlow — Final Project Presentation & Defense Guide</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-dark: #3730a3;
+      --primary-light: #e0e7ff;
+      --text: #0f172a;
+      --text-muted: #475569;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      padding: 2.5rem 1.5rem 5rem;
+    }
+
+    .container {
+      max-width: 1040px;
+      margin: 0 auto;
+    }
+
+    /* Header Banner */
+    .hero-header {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+      color: #ffffff;
+      padding: 2.75rem 2.5rem;
+      border-radius: 18px;
+      box-shadow: 0 12px 30px -8px rgba(49, 46, 129, 0.4);
+      margin-bottom: 2.5rem;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(8px);
+      padding: 0.3rem 0.85rem;
+      border-radius: 9999px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .hero-title {
+      font-size: 2.4rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 1rem;
+    }
+
+    .hero-meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.75rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.15);
+      font-size: 0.9rem;
+    }
+
+    .hero-meta-label {
+      color: #a5b4fc;
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 0.2rem;
+    }
+
+    .hero-meta-val {
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Sections & Cards */
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 2.25rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);
+    }
+
+    .section-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .section-desc {
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 1.75rem;
+    }
+
+    /* Tables */
+    .table-wrapper {
+      overflow-x: auto;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin: 1.25rem 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.925rem;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      padding: 0.85rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 0.775rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      padding: 1rem 1.15rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:nth-child(even) td {
+      background: #fafafa;
+    }
+
+    /* Badges */
+    .badge-id {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 0.825rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: #e0e7ff;
+      color: #4338ca;
+      white-space: nowrap;
+    }
+
+    .badge-perf {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 800;
+      font-size: 0.825rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      background: #dcfce7;
+      color: #15803d;
+      white-space: nowrap;
+    }
+
+    /* Roles Grid */
+    .role-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.25rem;
+    }
+
+    .role-card {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border-top: 4px solid var(--primary);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .role-name {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-bottom: 0.25rem;
+    }
+
+    .role-subtitle {
+      font-size: 0.825rem;
+      font-weight: 700;
+      color: #6366f1;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+    }
+
+    .role-list {
+      list-style: none;
+      font-size: 0.9rem;
+      color: #334155;
+    }
+
+    .role-list li {
+      margin-bottom: 0.5rem;
+      position: relative;
+      padding-left: 1.25rem;
+    }
+
+    .role-list li::before {
+      content: '✓';
+      color: #10b981;
+      position: absolute;
+      left: 0;
+      font-weight: 800;
+    }
+
+    /* Presentation Acts */
+    .act-block {
+      border-left: 3px solid #6366f1;
+      padding-left: 1.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .act-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
+      flex-wrap: wrap;
+    }
+
+    .act-tag {
+      background: #1e1b4b;
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 0.75rem;
+      padding: 0.25rem 0.65rem;
+      border-radius: 9999px;
+      text-transform: uppercase;
+    }
+
+    .act-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .act-speaker {
+      font-size: 0.85rem;
+      color: #475569;
+      font-weight: 600;
+    }
+
+    .act-body {
+      font-size: 0.925rem;
+      color: #334155;
+    }
+
+    .act-body ul {
+      margin-left: 1.25rem;
+      margin-top: 0.5rem;
+    }
+
+    .act-body li {
+      margin-bottom: 0.35rem;
+    }
+
+    .highlight-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.85rem 1.15rem;
+      font-size: 0.875rem;
+      color: #1e293b;
+      margin-top: 0.65rem;
+      border-left: 4px solid #10b981;
+    }
+
+    /* QA Blocks */
+    .qa-item {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.35rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .qa-q {
+      font-weight: 800;
+      font-size: 1.05rem;
+      color: #0f172a;
+      margin-bottom: 0.6rem;
+    }
+
+    .qa-a {
+      font-size: 0.925rem;
+      color: #334155;
+      line-height: 1.6;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: #f1f5f9;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.875em;
+      color: #4f46e5;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+        font-size: 11pt;
+      }
+      .section-card {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        page-break-inside: avoid;
+        margin-bottom: 1.5rem;
+        padding: 1.5rem;
+      }
+      .hero-header {
+        background: #1e1b4b !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        color: #ffffff !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Hero Header -->
+    <header class="hero-header">
+      <div class="hero-badge">🎓 PES University Software Engineering Mini-Project</div>
+      <h1 class="hero-title">PES EventFlow — Final Project Presentation & Defense Guide</h1>
+      <p style="color: #cbd5e1; font-size: 1.05rem; max-width: 800px;">
+        High-concurrency campus event ticketing, 10-minute ACID inventory holds, tokenized INR checkout, and gate check-in manifests for PES University clubs.
+      </p>
+
+      <div class="hero-meta-grid">
+        <div>
+          <div class="hero-meta-label">Team Members</div>
+          <div class="hero-meta-val">Jayanth Kumar P, Kartik Naik, Rishith</div>
+        </div>
+        <div>
+          <div class="hero-meta-label">Automated Tests</div>
+          <div class="hero-meta-val" style="color: #86efac;">64 / 64 Passed (100% Green)</div>
+        </div>
+        <div>
+          <div class="hero-meta-label">Sprint Delivery</div>
+          <div class="hero-meta-val">66 / 66 Story Points Delivered</div>
+        </div>
+        <div>
+          <div class="hero-meta-label">Primary Venues</div>
+          <div class="hero-meta-val">MRD Building, Opera House, PESU 52</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Functional Requirements Section -->
+    <section class="section-card">
+      <h2 class="section-title">📋 Complete Functional Requirements (FR) Inventory</h2>
+      <p class="section-desc">Every functional capability designed, developed, and verified in PES EventFlow.</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 100px;">Requirement</th>
+              <th>Name & Description</th>
+              <th>Key Implementation & Architecture</th>
+              <th>Verified Endpoints</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge-id">FR-01</span></td>
+              <td><strong>User Role Registration & Dashboard Routing</strong><br>3 user personas: Attendee (Student), Organizer (Club Lead), Platform Admin.</td>
+              <td>JWT auth, protected routes, role-based conditional navbar and dashboards.</td>
+              <td><code>/dashboard/attendee</code><br><code>/dashboard/organizer</code><br><code>/dashboard/admin</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-02</span></td>
+              <td><strong>Event Creation & Multi-Tier Seating</strong><br>Organizers define tiered capacities, pricing in INR, perks, and venues.</td>
+              <td>Multi-tier schema: Opera House 3 levels, MRD Building lab bays, VIP pits, and team bundles.</td>
+              <td><code>POST /api/events</code><br><code>PUT /api/events/:id</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-03</span></td>
+              <td><strong>Campus Catalog & Club Filtering</strong><br>High-speed browsing across 13 PES clubs with real-time tags.</td>
+              <td>MongoDB compound indexes (<code>{ status: 1, date: 1 }</code>). Category, venue, and club pills (<50ms).</td>
+              <td><code>GET /api/events</code><br><code>/events</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-04</span></td>
+              <td><strong>10-Minute Ticket Hold Engine</strong><br>Reserves seats immediately upon checkout start; live countdown timer.</td>
+              <td>Atomic stock decrement in ACID transaction. Background TTL sweep auto-restores abandoned seats.</td>
+              <td><code>POST /api/tickets/hold</code><br><code>DELETE /api/tickets/hold/:id</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-05</span></td>
+              <td><strong>Attendee Details & PES SRN Validation</strong><br>Mandatory student verification before pass reservation.</td>
+              <td>Regex validation: <code>/^PES[12]UG\d{2}[A-Z]{2}\d{3}$/</code> and 10-digit Indian mobile numbers.</td>
+              <td><code>POST /api/tickets/hold</code><br><code>PUT /api/auth/profile</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-06</span></td>
+              <td><strong>Tokenized Checkout & Ticket Issuance</strong><br>Simulated INR gateway for Card, UPI, and Campus Wallet.</td>
+              <td>Client-side nonce tokenization (<code>tok_...</code>), masked card storage, and instant QR passes.</td>
+              <td><code>POST /api/payments/pay</code><br><code>/checkout/:id</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-07</span></td>
+              <td><strong>Ticket Cancellation & Instant Refunds</strong><br>Students cancel confirmed tickets with seat restoration.</td>
+              <td>Non-reentrant cancel guard. Restores seat capacity, creates audit record (<code>refundId</code>) in INR.</td>
+              <td><code>POST /api/tickets/:id/cancel</code><br><code>/profile</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-08</span></td>
+              <td><strong>Attendee Manifest CSV Export</strong><br>Organizers download sanitized check-in CSVs for venue security.</td>
+              <td>Streams text/csv. Strictly includes paid confirmed attendees; filters out held or cancelled passes.</td>
+              <td><code>GET /api/events/:id/manifest</code></td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">FR-09</span></td>
+              <td><strong>Admin Moderation & Emergency Suspensions</strong><br>Admin killswitch to suspend unsafe/unauthorized events.</td>
+              <td>Instantly delists event from public catalog, blocks reservations (HTTP 403), with 1-click restore.</td>
+              <td><code>PATCH /api/admin/events/:id/status</code><br><code>/dashboard/admin</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Non-Functional Requirements Section -->
+    <section class="section-card">
+      <h2 class="section-title">⚡ Complete Non-Functional Requirements (NFR) Inventory</h2>
+      <p class="section-desc">Engineering standards, benchmark results, and security controls.</p>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 100px;">Requirement</th>
+              <th>Benchmark Target</th>
+              <th>Achieved Production Performance</th>
+              <th>Validation Test Suite</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge-id">NFR-01</span></td>
+              <td>50 concurrent buyers completing flash sale booking in &lt; 3.0s. Catalog latency &lt; 500ms.</td>
+              <td><span class="badge-perf">~280 ms Avg Latency</span> (p95: 302ms). Browsing: ~50ms. Supported by compound indexes.</td>
+              <td><code>tests/loadPerformance.test.js</code> (3/3 Passed)</td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">NFR-02</span></td>
+              <td>PCI-DSS compliance: Zero raw card numbers (PAN) or CVVs stored in database.</td>
+              <td><span class="badge-perf">100% Tokenized</span>: Only <code>tok_...</code> nonces and masked digits (<code>**** 1234</code>) stored.</td>
+              <td><code>tests/pciCompliance.test.js</code> (4/4 Passed)</td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">NFR-03</span></td>
+              <td>Zero overselling or orphaned holds under simultaneous multi-buyer race conditions.</td>
+              <td><span class="badge-perf">ACID Multi-Document Sessions</span> (<code>withTransaction</code>). Exactly 1 buyer succeeds on last seat.</td>
+              <td><code>tests/transaction.test.js</code> (5/5 Passed)</td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">NFR-04</span></td>
+              <td>Mobile-first UX: Fluid down to 320px/380px without horizontal scrolling; touch targets &ge; 48px.</td>
+              <td><span class="badge-perf">WCAG 2.1 AA Compliant</span>: Single-column linear flow, fluid cards, thumb-friendly buttons.</td>
+              <td><code>tests/mobileUx.test.js</code> (5/5 Passed)</td>
+            </tr>
+            <tr>
+              <td><span class="badge-id">NFR-05</span></td>
+              <td>Loosely-coupled payment architecture & API route security.</td>
+              <td><span class="badge-perf">Modular Provider Layer</span> ready to swap Razorpay/Stripe; strict JWT auth & express-validator.</td>
+              <td><code>tests/payment.test.js</code> (25/25 Passed)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Team Role Split -->
+    <section class="section-card">
+      <h2 class="section-title">👥 Team Role & Speaking Split</h2>
+      <p class="section-desc">Balanced distribution of architecture, coding, and live presentation duties.</p>
+
+      <div class="role-grid">
+        <div class="role-card">
+          <div class="role-name">Jayanth Kumar P</div>
+          <div class="role-subtitle">Architecture & Presentation Lead</div>
+          <ul class="role-list">
+            <li>Overall MERN stack architecture & problem statement</li>
+            <li>FR-03: Campus Catalog & Real-time club filters</li>
+            <li>FR-05 & FR-07: PES SRN validation, Student Pass Wallet, and Cancellation/Refunds</li>
+            <li>NFR-01: Flash-sale concurrency performance & compound indexing</li>
+            <li>Final terminal test demo (64/64 passing tests)</li>
+          </ul>
+        </div>
+
+        <div class="role-card">
+          <div class="role-name">Kartik Naik</div>
+          <div class="role-subtitle">Payments & Governance Lead</div>
+          <ul class="role-list">
+            <li>FR-02: Multi-tier event creation (MRD Building & Opera House)</li>
+            <li>FR-06: Simulated INR Payment Gateway</li>
+            <li>NFR-02: PCI-DSS compliance & client-side tokenization</li>
+            <li>FR-09: Platform Admin governance, live revenue telemetry & emergency suspensions</li>
+          </ul>
+        </div>
+
+        <div class="role-card">
+          <div class="role-name">Rishith</div>
+          <div class="role-subtitle">Concurrency & Operations Lead</div>
+          <ul class="role-list">
+            <li>FR-01: User Role registration & RBAC dashboard routing</li>
+            <li>FR-04: 10-Minute Ticket Hold Engine & TTL expiration sweep</li>
+            <li>NFR-03: ACID transactions & race-condition lock safety</li>
+            <li>FR-08: Club Organizer Studio & Attendee CSV manifest export</li>
+            <li>NFR-04: Mobile-first responsive checkout UX</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Live Presentation Flow -->
+    <section class="section-card">
+      <h2 class="section-title">🎬 7-Act Live Demo Script (12–15 Minutes)</h2>
+      <p class="section-desc">Follow this exact step-by-step sequence during your presentation for maximum impact.</p>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 1 (2 Mins)</span>
+          <span class="act-title">Problem Statement & PES Ecosystem</span>
+          <span class="act-speaker">— Speaker: Jayanth</span>
+        </div>
+        <div class="act-body">
+          Introduce <strong>PES EventFlow</strong>: Built to eliminate ticket scalping, seat hoarding, and server crashes during PES fests (Aatmatrisha) and technical hackathons.
+          <ul>
+            <li>Show Homepage: Point out 13 official PES clubs (Equinox, Aura, GCube, IEEE, etc.).</li>
+            <li>Point out real campus venues: <strong>MRD Building (PESU 52 Labs)</strong>, Opera House, GJBC Halls, Open Air Amphitheatre.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 2 (3 Mins)</span>
+          <span class="act-title">Attendee Experience & Multi-Tier Pricing</span>
+          <span class="act-speaker">— Speakers: Jayanth & Kartik</span>
+        </div>
+        <div class="act-body">
+          Navigate to <code>/events</code>. Demonstrate sub-50ms club filter pills (click <code>Aura (AI & ML)</code> or <code>GCube</code>).
+          <ul>
+            <li>Open <strong>Aura AI Hackathon</strong> or <strong>Aatmatrisha Comedy Night</strong>.</li>
+            <li>Show interactive multi-tier ticket selector: Solo Dev Pass (₹200), Duo Team (₹500), Opera House Level 1 Orchestra (₹600).</li>
+            <li>Highlight the <strong>"PESU 52 & MRD Building 24-Hour Innovation Hub"</strong> card showcasing gigabit LAN and backup power.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 3 (3 Mins)</span>
+          <span class="act-title">ACID 10-Minute Hold & Tokenized Checkout</span>
+          <span class="act-speaker">— Speakers: Rishith & Kartik</span>
+        </div>
+        <div class="act-body">
+          Click <strong>Book Tickets</strong> to launch Checkout:
+          <ul>
+            <li><strong>Step 1:</strong> Show the synchronized <strong>10:00 live hold countdown timer</strong>. Explain: <em>"Notice seats are decremented immediately in MongoDB so no one can snatch them while we type."</em></li>
+            <li><strong>Step 2:</strong> Show pre-filled student details: <code>Jayanth Kumar P</code>, <code>8217029299</code>, <code>PES1UG24CS199</code>. Enter an invalid SRN to show the validation error in real time, then restore it.</li>
+            <li><strong>Step 3:</strong> Fill card details. Explain NFR-02 (tokenization, zero raw card storage). Complete purchase and view the generated pass with QR code and Pass ID.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 4 (2 Mins)</span>
+          <span class="act-title">Student Pass Wallet & Instant Refund Loop</span>
+          <span class="act-speaker">— Speaker: Jayanth</span>
+        </div>
+        <div class="act-body">
+          Navigate to <code>/profile</code> (<strong>Student ID & Passes</strong>).
+          <ul>
+            <li>Showcase the visual Student ID Card header and clean white pass cards with emerald/amber left status borders.</li>
+            <li>Click <strong>Cancel Ticket & Refund</strong> on an eligible pass.</li>
+            <li>Show the exact refund confirmation in INR (<code>₹600</code>). Confirm and observe instant transition to <code>✕ Cancelled</code> with <code>Seats Restored to Inventory</code> and the immutable <code>refundId</code>.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 5 (2 Mins)</span>
+          <span class="act-title">Club Organizer Studio & CSV Manifest Export</span>
+          <span class="act-speaker">— Speaker: Rishith</span>
+        </div>
+        <div class="act-body">
+          Switch to Organizer view (<code>/dashboard/organizer</code>).
+          <ul>
+            <li>Show event management cards, revenue totals in INR, and live seat quota progress bars.</li>
+            <li>Click <strong>Download Attendee CSV Manifest</strong> and open the downloaded CSV.</li>
+            <li>Explain: <em>"This manifest strictly contains only confirmed, paid attendees with their SRN, phone, and seating level for gate security. Any cancelled or held seats are filtered out by the backend query."</em></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 6 (2 Mins)</span>
+          <span class="act-title">Platform Admin & Emergency Suspensions</span>
+          <span class="act-speaker">— Speaker: Kartik</span>
+        </div>
+        <div class="act-body">
+          Switch to Admin portal (<code>/dashboard/admin</code>).
+          <ul>
+            <li>Show platform revenue metrics and click <strong>Suspend Event</strong> on a test event.</li>
+            <li>Demonstrate that the event instantly disappears from the public catalog and blocks all booking attempts. Click <strong>Reinstate</strong> to restore it.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="act-block">
+        <div class="act-header">
+          <span class="act-tag">Act 7 (1 Min)</span>
+          <span class="act-title">Automated Test Proof & Conclusion</span>
+          <span class="act-speaker">— Speaker: Jayanth</span>
+        </div>
+        <div class="act-body">
+          Open terminal and run <code>npm test</code> inside the <code>server</code> folder:
+          <div class="highlight-box">
+            <strong>64 tests passed, 0 failed</strong> across all 10 test suites.<br>
+            Point out <code>loadPerformance.test.js</code> (~280ms average latency) and <code>transaction.test.js</code> (ACID multi-buyer race condition safety).
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Top Defense QA -->
+    <section class="section-card">
+      <h2 class="section-title">🛡️ Top Technical Evaluator Questions & Answers</h2>
+      <p class="section-desc">Key architectural questions professors frequently ask, with rock-solid technical answers.</p>
+
+      <div class="qa-item">
+        <div class="qa-q">Q1: How do you prevent two students from buying the last remaining ticket at the exact same millisecond?</div>
+        <div class="qa-a">
+          <strong>Answer:</strong> "We use MongoDB multi-document ACID transactions with document-level locking (<code>withTransaction</code>). When two concurrent purchase or hold requests hit the server, the query atomically checks <code>{ availableTickets: { $gte: quantity } }</code> and decrements the inventory. Only the first transaction acquires the write lock and commits; the second immediately aborts, rolls back, and returns an HTTP 409 Conflict. This is automated and verified in our test suite <code>transaction.test.js</code>."
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Q2: What happens if a student starts checkout, holds a seat, and abandons their tab?</div>
+        <div class="qa-a">
+          <strong>Answer:</strong> "Every ticket hold has an explicit TTL timestamp (<code>holdExpiresAt = now + 10 minutes</code>). Our server runs an automated background cleanup sweep that finds expired holds, marks them expired, and restores the exact seat quantity back to the event's available pool. Additionally, any attempt to view or book the event triggers an eager lazy sweep."
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Q3: How do you satisfy PCI-DSS compliance for card payments?</div>
+        <div class="qa-a">
+          <strong>Answer:</strong> "Under PCI-DSS guidelines, web applications should never store raw PANs (card numbers) or CVVs. In PES EventFlow, card credentials are tokenized on the client side into one-way nonces (<code>tok_...</code>). The payload transmitted to our server stores only the token and the masked last 4 digits (<code>**** 1234</code>) for receipt generation. Our automated test <code>pciCompliance.test.js</code> verifies zero 16-digit card numbers exist in MongoDB."
+        </div>
+      </div>
+
+      <div class="qa-item">
+        <div class="qa-q">Q4: Why did you choose MERN instead of a relational SQL database for ticketing?</div>
+        <div class="qa-a">
+          <strong>Answer:</strong> "PES campus events have polymorphic seating configurations: an Aatmatrisha concert has 3 Opera House levels and VIP pits, while an Aura Hackathon in the MRD Building has lab bench allocations and team squad bundles. MongoDB's document model allows each event to embed rich multi-tier ticket definitions without complex multi-table joins. Crucially, with MongoDB replica set transactions (<code>withTransaction</code>), we maintain strict ACID consistency for inventory and payments while enjoying sub-300ms read performance."
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

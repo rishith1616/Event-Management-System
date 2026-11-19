@@ -406,10 +406,13 @@ export const getAttendeeManifest = async (req, res, next) => {
       'Ticket ID',
       'Attendee Name',
       'Attendee Email',
+      'PES SRN',
       'Contact Phone',
+      'Ticket Tier',
+      'Seating Level',
       'Seats Reserved',
-      'Unit Price ($)',
-      'Total Paid ($)',
+      'Unit Price (INR)',
+      'Total Paid (INR)',
       'Booking Date',
       'Status',
     ];
@@ -424,7 +427,10 @@ export const getAttendeeManifest = async (req, res, next) => {
       const ticketId = t.ticketId || t._id.toString();
       const name = t.contactName || t.user?.name || 'Valued Attendee';
       const email = t.contactEmail || t.user?.email || '';
-      const phone = t.contactPhone || '';
+      const srn = t.contactSrn || t.user?.srn || 'N/A';
+      const phone = t.contactPhone || t.user?.phone || '';
+      const tier = t.tierName || 'General Admission';
+      const seating = t.seatingLevel || 'Standard';
       const quantity = t.quantity || 1;
       const unitPrice = Number(t.unitPrice || event.price || 0).toFixed(2);
       const totalAmount = Number(t.totalAmount || (t.quantity * (t.unitPrice || event.price || 0))).toFixed(2);
@@ -435,7 +441,10 @@ export const getAttendeeManifest = async (req, res, next) => {
         escapeCsv(ticketId),
         escapeCsv(name),
         escapeCsv(email),
+        escapeCsv(srn),
         escapeCsv(phone),
+        escapeCsv(tier),
+        escapeCsv(seating),
         quantity,
         unitPrice,
         totalAmount,

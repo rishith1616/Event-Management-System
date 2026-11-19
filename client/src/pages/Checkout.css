@@ -1,9 +1,10 @@
-/* Checkout.css — Modern, responsive styling for ticket checkout and hold timer */
+/* Checkout.css — Modern, Responsive Styling for PES EventFlow Checkout */
 
 .checkout-container {
-  max-width: 820px;
-  margin: 2rem auto;
-  padding: 0 1rem;
+  max-width: 860px;
+  min-height: 80vh;
+  margin: 2rem auto 4rem;
+  padding: 0 1.25rem;
   font-family: inherit;
 }
 
@@ -12,15 +13,34 @@
   margin-bottom: 2rem;
 }
 
+.checkout-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.3rem 0.85rem;
+  background: #e0e7ff;
+  color: #4338ca;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.75rem;
+}
+
 .checkout-header h1 {
-  font-size: 2rem;
-  color: #1e293b;
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.025em;
   margin-bottom: 0.5rem;
 }
 
 .checkout-subtitle {
   color: #64748b;
   font-size: 1rem;
+  max-width: 540px;
+  margin: 0 auto;
 }
 
 /* Step Wizard Navigation */
@@ -30,49 +50,53 @@
   align-items: center;
   margin-bottom: 2rem;
   background: #ffffff;
-  padding: 1rem 1.5rem;
-  border-radius: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 1.15rem 1.75rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05);
 }
 
 .checkout-step {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
+  gap: 0.65rem;
+  font-weight: 600;
   color: #94a3b8;
   font-size: 0.95rem;
+  transition: all 0.2s;
 }
 
 .checkout-step.active {
   color: #4f46e5;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .checkout-step.completed {
-  color: #16a34a;
+  color: #10b981;
 }
 
 .step-number {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
-  background: #e2e8f0;
-  color: #475569;
-  font-size: 0.85rem;
-  font-weight: bold;
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 0.875rem;
+  font-weight: 700;
+  transition: all 0.2s;
 }
 
 .checkout-step.active .step-number {
-  background: #4f46e5;
+  background: linear-gradient(135deg, #4f46e5, #6366f1);
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.35);
 }
 
 .checkout-step.completed .step-number {
-  background: #16a34a;
+  background: #10b981;
   color: #ffffff;
 }
 
@@ -80,16 +104,17 @@
   flex: 1;
   height: 2px;
   background: #e2e8f0;
-  margin: 0 0.75rem;
+  margin: 0 1rem;
 }
 
 /* Hold Countdown Timer Card */
 .hold-timer-card {
   background: #f8fafc;
-  border: 2px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 1.25rem 1.5rem;
-  margin-bottom: 1.5rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 12px;
+  padding: 1.25rem 1.75rem;
+  margin-bottom: 1.75rem;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.03);
   transition: all 0.3s ease;
 }
 
@@ -113,23 +138,23 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.65rem;
 }
 
 .timer-title {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  font-weight: 600;
+  font-weight: 700;
   font-size: 0.95rem;
-  color: #334155;
+  color: #1e293b;
 }
 
 .timer-countdown {
   font-size: 1.5rem;
-  font-weight: 700;
+  font-weight: 800;
   font-family: 'Courier New', Courier, monospace;
-  color: #1e293b;
+  color: #0f172a;
   letter-spacing: 1px;
 }
 
@@ -145,13 +170,14 @@
   width: 100%;
   height: 8px;
   background: #e2e8f0;
-  border-radius: 4px;
+  border-radius: 9999px;
   overflow: hidden;
 }
 
 .timer-progress-bar {
   height: 100%;
   background: #10b981;
+  border-radius: 9999px;
   transition: width 1s linear, background-color 0.5s ease;
 }
 
@@ -164,7 +190,7 @@
 }
 
 .timer-hint {
-  margin-top: 0.4rem;
+  margin-top: 0.45rem;
   font-size: 0.8rem;
   color: #64748b;
   text-align: right;
@@ -173,24 +199,26 @@
 /* Event Summary Card */
 .event-summary-card {
   background: #ffffff;
-  border-radius: 10px;
-  padding: 1.5rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 1.75rem 2rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.05);
 }
 
 .event-summary-card h2 {
-  font-size: 1.35rem;
-  color: #1e293b;
-  margin-bottom: 0.5rem;
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 0.75rem;
 }
 
 .event-meta-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
-  margin: 1rem 0;
-  padding: 1rem 0;
+  gap: 1.25rem;
+  margin: 1.25rem 0;
+  padding: 1.25rem 0;
   border-top: 1px solid #f1f5f9;
   border-bottom: 1px solid #f1f5f9;
 }
@@ -201,53 +229,265 @@
 }
 
 .meta-label {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   color: #64748b;
-  font-weight: 600;
-  margin-bottom: 0.2rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.25rem;
 }
 
 .meta-value {
-  font-size: 1rem;
-  color: #1e293b;
-  font-weight: 500;
+  font-size: 0.95rem;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .ticket-breakdown-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  margin-top: 1.25rem;
 }
 
 .ticket-breakdown-table td {
-  padding: 0.6rem 0;
+  padding: 0.65rem 0;
   font-size: 0.95rem;
+  color: #334155;
 }
 
 .ticket-breakdown-table .total-row td {
   border-top: 2px solid #e2e8f0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #1e293b;
-  padding-top: 0.8rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #0f172a;
+  padding-top: 1rem;
 }
 
-/* Form Styles */
+/* Form Styles — Production Ready */
 .checkout-form-card {
   background: #ffffff;
-  border-radius: 10px;
-  padding: 1.75rem;
-  margin-bottom: 1.5rem;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  padding: 2rem 2.25rem;
+  margin-bottom: 1.75rem;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
 }
 
-.checkout-form-card h3 {
-  font-size: 1.25rem;
+.form-header-box {
+  margin-bottom: 1.75rem;
+  padding-bottom: 1.25rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.form-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  margin-bottom: 0.5rem;
+}
+
+.form-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+  margin-bottom: 0.35rem;
+}
+
+.form-desc {
+  font-size: 0.925rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Two-Column Responsive Grid */
+.form-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
   margin-bottom: 1.25rem;
-  color: #1e293b;
 }
 
+.form-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.45rem;
+}
+
+.label-left {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.label-req {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+.label-opt {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+/* Input with Left Icon and Right Status Indicator */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.input-icon-left {
+  position: absolute;
+  left: 0.95rem;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.form-input-modern {
+  width: 100%;
+  padding: 0.75rem 2.5rem 0.75rem 2.65rem;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #0f172a;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input-modern:focus {
+  border-color: #6366f1;
+  background: #ffffff;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  outline: none;
+}
+
+.form-input-modern:focus + .input-icon-left {
+  color: #6366f1;
+}
+
+.form-input-modern.input-error-state {
+  border-color: #ef4444;
+  background: #fffafa;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+.form-input-modern.input-valid-state {
+  border-color: #10b981;
+}
+
+.input-status-right {
+  position: absolute;
+  right: 0.85rem;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  font-size: 0.85rem;
+}
+
+.status-badge-valid {
+  color: #10b981;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.75rem;
+}
+
+.status-badge-error {
+  color: #ef4444;
+  font-weight: 700;
+}
+
+/* Field Feedback Helpers */
+.field-hint-text {
+  font-size: 0.775rem;
+  color: #64748b;
+  margin-top: 0.4rem;
+  line-height: 1.4;
+}
+
+.field-error-text {
+  font-size: 0.8rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* SRN Guide Callout Box */
+.srn-guide-callout {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.825rem;
+  color: #475569;
+}
+
+.srn-guide-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.srn-guide-callout strong {
+  color: #0f172a;
+}
+
+.srn-guide-callout code {
+  background: #e2e8f0;
+  color: #334155;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+/* Badge for SRN */
+.badge-srn-pill {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #4338ca;
+  font-weight: 800;
+  font-family: 'Courier New', Courier, monospace;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+
+/* Form Actions Row */
 .form-actions {
   display: flex;
   justify-content: space-between;
@@ -255,14 +495,63 @@
   margin-top: 2rem;
   gap: 1rem;
   flex-wrap: wrap;
+  padding-top: 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.btn-proceed-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.85rem 1.65rem;
+  border-radius: 10px;
+  border: none;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.btn-proceed-cta:hover:not(:disabled) {
+  background: linear-gradient(135deg, #4338ca 0%, #4f46e5 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.btn-proceed-cta:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-back-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  color: #334155;
+  font-weight: 600;
+  padding: 0.85rem 1.25rem;
+  border-radius: 10px;
+  border: 1px solid #cbd5e1;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-back-action:hover {
+  background: #e2e8f0;
+  color: #0f172a;
 }
 
 /* Payment Mock */
 .payment-mock-badge {
   background: #eff6ff;
   border: 1px dashed #3b82f6;
-  border-radius: 6px;
-  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  padding: 0.85rem 1.15rem;
   margin-bottom: 1.5rem;
   font-size: 0.875rem;
   color: #1d4ed8;
@@ -270,35 +559,36 @@
 
 .payment-card-layout {
   display: flex;
-  gap: 1.5rem;
+  gap: 1.75rem;
   flex-wrap: wrap;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.75rem;
   width: 100%;
 }
 
 .credit-card-preview {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
   color: #ffffff;
-  border-radius: 12px;
-  padding: 1.5rem;
+  border-radius: 14px;
+  padding: 1.65rem;
   margin-bottom: 1.5rem;
   max-width: 360px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  width: 100%;
+  box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
 }
 
 .cc-chip {
-  width: 40px;
-  height: 28px;
-  background: #d97706;
-  border-radius: 4px;
-  margin-bottom: 1.5rem;
+  width: 44px;
+  height: 32px;
+  background: #f59e0b;
+  border-radius: 6px;
+  margin-bottom: 1.75rem;
 }
 
 .cc-number {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   letter-spacing: 2px;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1.5rem;
 }
 
 .cc-meta {
@@ -311,11 +601,12 @@
 /* Status Banners */
 .alert-banner {
   padding: 1rem 1.25rem;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  font-size: 0.95rem;
 }
 
 .alert-banner.error {
@@ -339,10 +630,11 @@
 /* Expired View */
 .expired-card {
   text-align: center;
-  padding: 3rem 2rem;
+  padding: 3.5rem 2rem;
   background: #ffffff;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 14px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
 }
 
 .expired-icon {
@@ -351,80 +643,85 @@
 }
 
 .expired-card h2 {
-  font-size: 1.75rem;
+  font-size: 1.85rem;
+  font-weight: 800;
   color: #dc2626;
   margin-bottom: 0.75rem;
 }
 
 .expired-card p {
   color: #64748b;
-  max-width: 500px;
+  max-width: 520px;
   margin: 0 auto 2rem;
   font-size: 1.05rem;
+  line-height: 1.6;
 }
 
 /* Buttons */
 .btn-secondary {
-  background-color: #e2e8f0;
+  background-color: #f1f5f9;
   color: #334155;
-  border: none;
+  border: 1px solid #cbd5e1;
 }
 
 .btn-secondary:hover {
-  background-color: #cbd5e1;
+  background-color: #e2e8f0;
 }
 
 .btn-outline-danger {
   background: transparent;
-  border: 1px solid #ef4444;
+  border: 1.5px solid #ef4444;
   color: #dc2626;
+  font-weight: 600;
+  padding: 0.8rem 1.25rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .btn-outline-danger:hover {
   background: #fef2f2;
+  border-color: #dc2626;
 }
 
-
 /* ==========================================================================
-   NFR-04: Mobile-First Checkout UX Enhancements
+   NFR-04: Mobile-First Checkout UX
    Ensures 0 horizontal scroll, minimum 48px touch targets, mobile card scaling,
-   and fluid single-column checkout flow on small viewports (<= 640px and <= 480px).
+   and fluid single-column checkout flow on small viewports (<= 640px and <= 380px).
    ========================================================================== */
 
 @media (max-width: 640px) {
   .checkout-container {
     padding: 0 0.75rem;
-    margin: 1rem auto;
+    margin: 1rem auto 3rem;
     width: 100%;
     max-width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
   }
 
-  .checkout-header h1 {
-    font-size: 1.5rem;
+  .form-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 0;
   }
 
-  .checkout-subtitle {
-    font-size: 0.9rem;
+  .checkout-form-card,
+  .event-summary-card,
+  .hold-timer-card {
+    padding: 1.25rem 1rem;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Compact Horizontal Touch Stepper */
   .checkout-steps {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-around;
     padding: 0.75rem 0.5rem;
-    border-radius: 8px;
     gap: 0.25rem;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
   }
 
   .checkout-step {
     font-size: 0.75rem;
     gap: 0.35rem;
-    white-space: nowrap;
   }
 
   .step-number {
@@ -433,101 +730,53 @@
     font-size: 0.75rem;
   }
 
-  /* Form & Card Full Width on Mobile */
-  .checkout-form-card,
-  .event-summary-card,
-  .hold-timer-card {
-    padding: 1.1rem 1rem;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Credit Card Preview responsive scaling */
-  .credit-card-preview {
-    max-width: 100%;
-    width: 100%;
-    padding: 1.15rem;
-    box-sizing: border-box;
-  }
-
-  .cc-number {
-    font-size: 1.05rem;
-    letter-spacing: 1.5px;
-    margin-bottom: 0.75rem;
-  }
-
-  .cc-chip {
-    width: 34px;
-    height: 24px;
-    margin-bottom: 0.75rem;
-  }
-
-  /* Form input optimization: 48px touch targets & 16px font to stop iOS zoom */
-  input[type="text"],
-  input[type="email"],
-  input[type="tel"],
-  input[type="number"],
-  select {
-    font-size: 16px !important;
-    min-height: 48px;
-    padding: 0.75rem;
-    border-radius: 8px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  /* Thumb-friendly Full-Width Action Buttons (min 48px height) */
-  .form-actions {
-    display: flex;
-    flex-direction: column-reverse;
-    gap: 0.75rem;
-    margin-top: 1.5rem;
-    width: 100%;
-  }
-
-  .form-actions > div {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-  }
-
-  .form-actions .btn,
-  .btn-large,
-  .btn-primary,
-  .btn-secondary,
+  .form-input-modern,
+  .form-group input,
+  .form-actions button,
+  .btn-proceed-cta,
+  .btn-back-action,
   .btn-outline-danger {
     min-height: 48px;
-    font-size: 1rem;
-    font-weight: 600;
-    width: 100% !important;
-    padding: 0.85rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    font-size: 16px !important;
+    width: 100%;
     box-sizing: border-box;
   }
 
-  /* Hold Timer Bar on Mobile */
-  .hold-timer-content {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.5rem;
+  .payment-card-layout {
+    width: 100%;
   }
 
-  .timer-clock {
-    font-size: 1.5rem;
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .form-actions button,
+  .form-actions div {
+    width: 100%;
+  }
+
+  .form-actions div {
+    display: flex;
+    flex-direction: column;
   }
 }
 
 @media (max-width: 380px) {
-  .checkout-step span:not(.step-number) {
-    display: none; /* Icon/number only for ultra-narrow screens like 320px */
+  .checkout-container {
+    padding: 0 0.5rem;
   }
 
-  .ticket-meta-grid {
-    grid-template-columns: 1fr;
+  .checkout-header h1 {
+    font-size: 1.45rem;
+  }
+
+  .checkout-steps {
+    padding: 0.5rem 0.25rem;
+  }
+
+  .checkout-step {
+    font-size: 0.7rem;
   }
 }
-

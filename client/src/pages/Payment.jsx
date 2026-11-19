@@ -299,7 +299,7 @@ const Payment = () => {
             </div>
             <div className="receipt-row">
               <span>Total Paid:</span>
-              <strong>${Number(totalAmount).toFixed(2)} USD</strong>
+              <strong>₹{Number(totalAmount).toLocaleString("en-IN")} INR</strong>
             </div>
             <div className="receipt-row">
               <span>Payment Status:</span>
@@ -380,12 +380,12 @@ const Payment = () => {
               </div>
               <div className="pricing-row">
                 <span>Unit Price:</span>
-                <span>${Number(unitPrice).toFixed(2)}</span>
+                <span>₹{Number(unitPrice).toLocaleString("en-IN")}</span>
               </div>
               <div className="pricing-row total-row" style={{ marginTop: '0.75rem', borderTop: '2px solid #e5e7eb', paddingTop: '0.75rem' }}>
                 <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>Total Price:</span>
                 <span style={{ fontSize: '1.25rem', fontWeight: 700, color: '#111827' }}>
-                  ${Number(totalPrice).toFixed(2)} USD
+                  ₹{Number(totalPrice).toLocaleString("en-IN")} INR
                 </span>
               </div>
             </div>
@@ -553,7 +553,7 @@ const Payment = () => {
                       <span className="spinner-sm"></span> Processing Payment...
                     </span>
                   ) : (
-                    `Pay Now $${Number(totalPrice).toFixed(2)}`
+                    `Pay Now ₹{Number(totalPrice).toLocaleString("en-IN")}`
                   )}
                 </button>
               </div>

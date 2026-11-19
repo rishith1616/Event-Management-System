@@ -78,6 +78,13 @@ export const AuthProvider = ({ children }) => {
   };
 
   /**
+   * Update authenticated user profile in state
+   */
+  const updateUser = (updatedUser) => {
+    setUser((prev) => ({ ...(prev || {}), ...updatedUser }));
+  };
+
+  /**
    * Log out currently authenticated user
    */
   const logout = () => {
@@ -93,6 +100,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: !!user,
     login,
     register,
+    updateUser,
     logout,
   };
 

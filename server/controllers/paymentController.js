@@ -21,7 +21,7 @@ import Payment from '../models/Payment.js';
  */
 export const processPayment = async (req, res, next) => {
   try {
-    const { amount, currency = 'USD', token, cardLast4 = '4242', cardBrand = 'Visa', eventId, metadata } = req.body;
+    const { amount, currency = 'INR', token, cardLast4 = '1234', cardBrand = 'Visa', eventId, metadata, maskedCardNumber: rawMasked } = req.body;
 
     // Validate request parameters
     if (amount === undefined || amount === null || typeof amount !== 'number' || amount <= 0) {
@@ -67,7 +67,7 @@ export const processPayment = async (req, res, next) => {
           token,
           cardLast4,
           cardBrand,
-          maskedCardNumber: `•••• •••• •••• ${cardLast4}`,
+          maskedCardNumber: rawMasked || `**** **** **** ${cardLast4}`,
           status: 'completed',
           metadata: metadata || {},
         });
@@ -234,7 +234,7 @@ export const auditPciStorage = async (_req, res, next) => {
         paymentId: p._id,
         transactionId: p.transactionId,
         token: p.token || 'tok_tokenized',
-        maskedCard: p.maskedCardNumber || `•••• ${p.cardLast4 || '4242'}`,
+        maskedCard: p.maskedCardNumber || `**** **** **** ${p.cardLast4 || '1234'}`,
         rawPanStored: !isCompliant,
       });
     }

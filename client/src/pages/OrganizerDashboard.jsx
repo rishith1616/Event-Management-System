@@ -2,7 +2,7 @@
  * pages/OrganizerDashboard.jsx — Organizer landing page
  * Provides event organizers with event creation and management tools.
  */
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
@@ -14,46 +14,87 @@ const OrganizerDashboard = () => {
 
 
   const [downloadingId, setDownloadingId] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchMyEvents = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      const res = await api.get('/events/my-events');
+      if (res.data && res.data.events) {
+        setMyEvents(res.data.events);
+      }
+    } catch (err) {
+      console.error('Failed to load organizer events:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
 
   const handleDownloadManifest = async (eventId, eventTitle) => {
     try {
       setDownloadingId(eventId);
-      const res = await api.get(`/events/${eventId}/manifest`, {
-        responseType: 'blob',
-      });
+      let targetId = eventId;
+      let res;
+      try {
+        res = await api.get(`/events/${targetId}/manifest`, {
+          responseType: 'blob',
+        });
+      } catch (firstErr) {
+        // If event was re-seeded with a new ID (e.g. freshly re-run test), refresh and retry seamlessly
+        if (firstErr.response?.status === 404) {
+          const freshRes = await api.get('/events/my-events');
+          if (freshRes.data?.events) {
+            setMyEvents(freshRes.data.events);
+            const matched = freshRes.data.events.find(
+              (e) => e.title === eventTitle || e._id === eventId
+            );
+            if (matched) {
+              targetId = matched._id;
+              res = await api.get(`/events/${targetId}/manifest`, {
+                responseType: 'blob',
+              });
+            } else {
+              throw firstErr;
+            }
+          } else {
+            throw firstErr;
+          }
+        } else {
+          throw firstErr;
+        }
+      }
+
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
       const link = document.createElement('a');
       link.href = url;
       const safeTitle = (eventTitle || 'event').replace(/[^a-zA-Z0-9_-]/g, '_');
-      link.setAttribute('download', `attendee-manifest-${safeTitle}-${eventId.slice(-6)}.csv`);
+      link.setAttribute('download', `attendee-manifest-${safeTitle}-${targetId.slice(-6)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to download manifest:', err);
-      alert(err.response?.data?.message || 'Failed to download manifest.');
+      let errMsg = 'Failed to download manifest.';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.message) errMsg = parsed.message;
+        } catch (_) {}
+      } else if (err.response?.data?.message) {
+        errMsg = err.response.data.message;
+      }
+      alert(errMsg);
     } finally {
       setDownloadingId(null);
     }
   };
 
   useEffect(() => {
-    const fetchMyEvents = async () => {
-      try {
-        const res = await api.get('/events/my-events');
-        if (res.data && res.data.events) {
-          setMyEvents(res.data.events);
-        }
-      } catch (err) {
-        console.error('Failed to load organizer events:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchMyEvents();
-  }, []);
+  }, [fetchMyEvents]);
 
   return (
     <div className="container dashboard">
@@ -72,7 +113,16 @@ const OrganizerDashboard = () => {
               Publish new conferences, meetups, hackathons, and workshops.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              onClick={fetchMyEvents}
+              disabled={refreshing}
+              className="btn btn-outline"
+              style={{ padding: '0.55rem 1rem', fontSize: '0.9rem', cursor: 'pointer' }}
+            >
+              {refreshing ? 'Refreshing...' : '↻ Refresh'}
+            </button>
             <Link to="/events/my-events" className="btn btn-primary" style={{ textDecoration: 'none' }}>
               My Events List
             </Link>

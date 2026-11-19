@@ -3,17 +3,17 @@
  * Provides UI controls for category, date range, keyword search, and sorting.
  */
 import { useState, useEffect } from 'react';
+import { SearchIcon, FilterIcon } from './Icons';
 
 const CATEGORIES = [
-  'All',
-  'Conference',
-  'Workshop',
-  'Concert',
-  'Meetup',
-  'Seminar',
-  'Exhibition',
-  'Sports',
-  'Other',
+  { id: 'All', label: 'All Categories' },
+  { id: 'tech', label: 'Technology' },
+  { id: 'music', label: 'Music & Concerts' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'business', label: 'Business & Pitching' },
+  { id: 'arts', label: 'Arts & Culture' },
+  { id: 'food', label: 'Food & Culinary' },
+  { id: 'other', label: 'Other' },
 ];
 
 const FilterBar = ({ initialFilters, onApplyFilters, onClearFilters }) => {
@@ -45,6 +45,17 @@ const FilterBar = ({ initialFilters, onApplyFilters, onClearFilters }) => {
     });
   };
 
+  const handleCategoryPillClick = (catId) => {
+    setCategory(catId);
+    onApplyFilters({
+      search: search.trim(),
+      category: catId === 'All' ? '' : catId,
+      startDate,
+      endDate,
+      sort,
+    });
+  };
+
   const handleClear = () => {
     setSearch('');
     setCategory('All');
@@ -57,50 +68,56 @@ const FilterBar = ({ initialFilters, onApplyFilters, onClearFilters }) => {
   };
 
   return (
-    <div className="filter-bar-container card">
-      <form onSubmit={handleSubmit} className="filter-form" role="search" aria-label="Event filters">
-        <div className="filter-grid">
-          {/* Search keyword input */}
-          <div className="form-group filter-item search-item">
-            <label htmlFor="filter-search">Search Events</label>
-            <input
-              id="filter-search"
-              type="text"
-              placeholder="Search by title or description..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-
-          {/* Category dropdown */}
-          <div className="form-group filter-item">
-            <label htmlFor="filter-category">Category</label>
-            <select
-              id="filter-category"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+    <div className="filter-bar-modern card">
+      {/* Category Pills Bar for Instant Filtering */}
+      <div className="filter-pills-scroll">
+        {CATEGORIES.map((cat) => {
+          const isSelected = category.toLowerCase() === cat.id.toLowerCase();
+          return (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => handleCategoryPillClick(cat.id)}
+              className={`filter-category-pill ${isSelected ? 'pill-selected' : ''}`}
             >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat === 'All' ? 'All Categories' : cat}
-                </option>
-              ))}
-            </select>
+              {cat.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <form onSubmit={handleSubmit} className="filter-form-modern" role="search" aria-label="Event filters">
+        <div className="filter-grid-modern">
+          {/* Search keyword input */}
+          <div className="form-group-modern search-item-modern">
+            <label htmlFor="filter-search">Search Event Catalog</label>
+            <div className="search-box-wrapper">
+              <SearchIcon className="search-field-icon" />
+              <input
+                id="filter-search"
+                type="text"
+                placeholder="Search by event title, speaker, or keywords..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="input-with-icon"
+              />
+            </div>
           </div>
 
           {/* Start Date */}
-          <div className="form-group filter-item">
+          <div className="form-group-modern">
             <label htmlFor="filter-start-date">From Date</label>
             <input
               id="filter-start-date"
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              className="modern-date-input"
             />
           </div>
 
           {/* End Date */}
-          <div className="form-group filter-item">
+          <div className="form-group-modern">
             <label htmlFor="filter-end-date">To Date</label>
             <input
               id="filter-end-date"
@@ -108,38 +125,37 @@ const FilterBar = ({ initialFilters, onApplyFilters, onClearFilters }) => {
               value={endDate}
               min={startDate || undefined}
               onChange={(e) => setEndDate(e.target.value)}
+              className="modern-date-input"
             />
           </div>
 
           {/* Sort dropdown */}
-          <div className="form-group filter-item">
-            <label htmlFor="filter-sort">Sort By</label>
+          <div className="form-group-modern">
+            <label htmlFor="filter-sort">Sort Ordering</label>
             <select
               id="filter-sort"
               value={sort}
               onChange={(e) => setSort(e.target.value)}
+              className="modern-select-input"
             >
               <option value="date">Date: Upcoming First</option>
               <option value="date-desc">Date: Latest First</option>
-              <option value="price">Price: Low to High</option>
+              <option value="price">Price: Free & Low to High</option>
               <option value="price-desc">Price: High to Low</option>
-              <option value="title">Title: A to Z</option>
-              <option value="title-desc">Title: Z to A</option>
+              <option value="title">Title: Alphabetical (A–Z)</option>
+              <option value="title-desc">Title: Reverse (Z–A)</option>
             </select>
           </div>
         </div>
 
         {/* Buttons */}
-        <div className="filter-actions">
-          <button type="submit" className="btn btn-primary">
-            Apply Filters
+        <div className="filter-actions-modern">
+          <button type="button" className="btn btn-secondary-modern" onClick={handleClear}>
+            Reset Filters
           </button>
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={handleClear}
-          >
-            Clear
+          <button type="submit" className="btn btn-primary-modern">
+            <FilterIcon style={{ marginRight: '6px' }} />
+            <span>Apply Filters</span>
           </button>
         </div>
       </form>

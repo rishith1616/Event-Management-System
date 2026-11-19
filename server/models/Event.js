@@ -54,6 +54,18 @@ const eventSchema = new mongoose.Schema(
       min: [0, 'Price must be non-negative'],
       default: 0,
     },
+    ticketTiers: [
+      {
+        name: { type: String, required: true },
+        price: { type: Number, required: true, min: 0 },
+        capacity: { type: Number, default: 100 },
+        available: { type: Number, default: 100 },
+        phase: { type: String, default: 'General' },
+        seatingLevel: { type: String, default: '' },
+        perks: [{ type: String }],
+        description: { type: String, default: '' },
+      },
+    ],
     category: {
       type: String,
       enum: ['tech', 'music', 'sports', 'business', 'arts', 'food', 'other'],

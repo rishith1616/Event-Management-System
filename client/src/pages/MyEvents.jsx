@@ -37,21 +37,58 @@ function MyEvents() {
   const handleDownloadManifest = async (eventId, eventTitle) => {
     try {
       setActionLoading((prev) => ({ ...prev, [`manifest_${eventId}`]: true }));
-      const res = await api.get(`/events/${eventId}/manifest`, {
-        responseType: 'blob',
-      });
+      let targetId = eventId;
+      let res;
+      try {
+        res = await api.get(`/events/${targetId}/manifest`, {
+          responseType: 'blob',
+        });
+      } catch (firstErr) {
+        if (firstErr.response?.status === 404) {
+          const freshRes = await api.get('/events/my-events');
+          if (freshRes.data?.events) {
+            setEvents(freshRes.data.events);
+            const matched = freshRes.data.events.find(
+              (e) => e.title === eventTitle || e._id === eventId
+            );
+            if (matched) {
+              targetId = matched._id;
+              res = await api.get(`/events/${targetId}/manifest`, {
+                responseType: 'blob',
+              });
+            } else {
+              throw firstErr;
+            }
+          } else {
+            throw firstErr;
+          }
+        } else {
+          throw firstErr;
+        }
+      }
+
       const url = window.URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }));
       const link = document.createElement('a');
       link.href = url;
       const safeTitle = (eventTitle || 'event').replace(/[^a-zA-Z0-9_-]/g, '_');
-      link.setAttribute('download', `attendee-manifest-${safeTitle}-${eventId.slice(-6)}.csv`);
+      link.setAttribute('download', `attendee-manifest-${safeTitle}-${targetId.slice(-6)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (err) {
       console.error('Failed to download attendee manifest:', err);
-      alert(err.response?.data?.message || 'Failed to download manifest. Please ensure you are authorized.');
+      let errMsg = 'Failed to download manifest.';
+      if (err.response?.data instanceof Blob) {
+        try {
+          const text = await err.response.data.text();
+          const parsed = JSON.parse(text);
+          if (parsed.message) errMsg = parsed.message;
+        } catch (_) {}
+      } else if (err.response?.data?.message) {
+        errMsg = err.response.data.message;
+      }
+      alert(errMsg);
     } finally {
       setActionLoading((prev) => ({ ...prev, [`manifest_${eventId}`]: false }));
     }

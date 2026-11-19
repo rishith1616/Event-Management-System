@@ -53,6 +53,14 @@ const ticketSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Total amount cannot be negative'],
     },
+    tierName: {
+      type: String,
+      default: 'General Admission',
+    },
+    seatingLevel: {
+      type: String,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['held', 'pending', 'confirmed', 'cancelled', 'canceled', 'expired', 'refunded'],
@@ -105,6 +113,20 @@ const ticketSchema = new mongoose.Schema(
       type: String,
       trim: true,
       default: '',
+    },
+    contactSrn: {
+      type: String,
+      trim: true,
+      uppercase: true,
+      default: '',
+    },
+    cardLast4: {
+      type: String,
+      default: '1234',
+    },
+    maskedCardNumber: {
+      type: String,
+      default: '**** **** **** 1234',
     },
   },
   {

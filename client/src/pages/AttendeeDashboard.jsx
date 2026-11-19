@@ -1,34 +1,36 @@
 /**
- * pages/AttendeeDashboard.jsx — Attendee landing page
- * Provides event attendees with access to browse upcoming events and view/cancel purchased tickets (FR-07).
+ * pages/AttendeeDashboard.jsx — Modern PES University Attendee Dashboard
+ * Features student overview, quick pass wallet access, booking metrics,
+ * and recommended PES campus events.
  */
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import EventCard from '../components/EventCard';
+import {
+  IdCardIcon,
+  TicketIcon,
+  CheckCircleIcon,
+  AlertCircleIcon,
+  ArrowRightIcon,
+  CalendarIcon,
+} from '../components/Icons';
 
 const AttendeeDashboard = () => {
   const { user } = useAuth();
   const [featuredEvents, setFeaturedEvents] = useState([]);
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [ticketsLoading, setTicketsLoading] = useState(true);
-  const [actionMessage, setActionMessage] = useState(null);
-  const [actionError, setActionError] = useState(null);
-  const [cancelingId, setCancelingId] = useState(null);
 
   const fetchTickets = async () => {
     try {
-      setTicketsLoading(true);
       const res = await api.get('/tickets/my-tickets');
       if (res.data && res.data.data) {
         setTickets(res.data.data);
       }
     } catch (err) {
       console.error('Failed to load attendee tickets:', err);
-    } finally {
-      setTicketsLoading(false);
     }
   };
 
@@ -50,92 +52,245 @@ const AttendeeDashboard = () => {
     fetchTickets();
   }, []);
 
-  const handleCancelTicket = async (ticket) => {
-    const confirmCancel = window.confirm(
-      `Are you sure you want to cancel your ticket for "${ticket.event?.title || 'this event'}"? ` +
-      `Your reserved seat(s) will be returned to inventory and a refund of $${Number(ticket.totalAmount || 0).toFixed(2)} will be initiated.`
-    );
-
-    if (!confirmCancel) return;
-
-    try {
-      setCancelingId(ticket._id);
-      setActionMessage(null);
-      setActionError(null);
-
-      const res = await api.post(`/tickets/${ticket._id}/cancel`, {
-        reason: 'Attendee requested cancellation via dashboard',
-      });
-
-      if (res.data && res.data.success) {
-        setActionMessage(
-          `Ticket for "${ticket.event?.title || 'Event'}" was successfully canceled. Refund of $${Number(ticket.totalAmount || 0).toFixed(2)} has been recorded and seat capacity was restored!`
-        );
-        await fetchTickets();
-      }
-    } catch (err) {
-      console.error('Error canceling ticket:', err);
-      setActionError(
-        err.response?.data?.message || 'Failed to cancel ticket. Please try again later.'
-      );
-    } finally {
-      setCancelingId(null);
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'confirmed':
-        return <span className="badge" style={{ background: '#16a34a', color: '#fff' }}>Confirmed</span>;
-      case 'cancelled':
-      case 'canceled':
-        return <span className="badge" style={{ background: '#ef4444', color: '#fff' }}>Cancelled</span>;
-      case 'refunded':
-        return <span className="badge" style={{ background: '#0284c7', color: '#fff' }}>Refunded</span>;
-      case 'held':
-        return <span className="badge" style={{ background: '#f59e0b', color: '#fff' }}>Held (Checkout)</span>;
-      default:
-        return <span className="badge" style={{ background: '#64748b', color: '#fff' }}>{status}</span>;
-    }
-  };
+  const confirmedCount = tickets.filter((t) => t.status === 'confirmed').length;
+  const heldCount = tickets.filter((t) => t.status === 'held').length;
+  const cancelledCount = tickets.filter((t) => ['cancelled', 'canceled', 'refunded'].includes(t.status)).length;
+  const activeHeldTicket = tickets.find((t) => t.status === 'held');
 
   return (
-    <div className="container dashboard">
-      <header className="dashboard-header card">
-        <h1>Attendee Dashboard</h1>
-        <p className="welcome-message">
-          Welcome, <strong>{user?.name}</strong>! You are logged in as an <strong>Attendee</strong>.
-        </p>
+    <div className="container dashboard" style={{ padding: '2.5rem 1rem 5rem', maxWidth: '1100px' }}>
+      {/* Student Identity Header Card */}
+      <header
+        className="card"
+        style={{
+          background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%)',
+          color: '#ffffff',
+          borderRadius: '16px',
+          padding: '2rem 2.25rem',
+          boxShadow: '0 10px 25px -5px rgba(49, 46, 129, 0.4)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          marginBottom: '2rem',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.25rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+            <div
+              style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '14px',
+                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '1.65rem',
+                fontWeight: 800,
+                color: '#ffffff',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+                flexShrink: 0,
+              }}
+            >
+              {user?.name ? user.name.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() : 'JK'}
+            </div>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+                <h1 style={{ margin: 0, fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>
+                  {user?.name || 'Jayanth Kumar P'}
+                </h1>
+                <span style={{ background: '#10b981', color: '#ffffff', fontSize: '0.75rem', fontWeight: 800, padding: '0.2rem 0.65rem', borderRadius: '9999px', textTransform: 'uppercase' }}>
+                  ✓ PES Student Verified
+                </span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '0.45rem', flexWrap: 'wrap', fontSize: '0.9rem', color: '#cbd5e1' }}>
+                <span>SRN: <strong style={{ color: '#a5b4fc', fontFamily: 'monospace', letterSpacing: '0.5px' }}>{user?.srn || 'PES1UG24CS199'}</strong></span>
+                <span>•</span>
+                <span>Phone: <strong style={{ color: '#ffffff' }}>+91 {user?.phone || '8217029299'}</strong></span>
+                <span>•</span>
+                <span>Email: <strong style={{ color: '#ffffff' }}>{user?.email || 'jayanthkumar08p@gmail.com'}</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link
+              to="/profile"
+              className="btn"
+              style={{
+                background: 'rgba(255, 255, 255, 0.15)',
+                color: '#ffffff',
+                border: '1px solid rgba(255, 255, 255, 0.25)',
+                backdropFilter: 'blur(8px)',
+                padding: '0.65rem 1.25rem',
+                borderRadius: '10px',
+                fontWeight: 700,
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+              }}
+            >
+              <IdCardIcon />
+              <span>Student ID & Passes</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick Booking Metrics Bar */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginTop: '1.75rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255, 255, 255, 0.15)' }}>
+          <div>
+            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#86efac', fontWeight: 700 }}>Confirmed Passes</div>
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>{confirmedCount}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#fde68a', fontWeight: 700 }}>Pending Holds</div>
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>{heldCount}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#fca5a5', fontWeight: 700 }}>Cancelled & Restored</div>
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>{cancelledCount}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#c7d2fe', fontWeight: 700 }}>Campus Events Enrolled</div>
+            <div style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>{tickets.length}</div>
+          </div>
+        </div>
       </header>
 
-      {actionMessage && (
-        <div className="alert alert-success" style={{ marginTop: '1rem', padding: '1rem', background: '#dcfce7', color: '#166534', borderRadius: '6px', border: '1px solid #86efac' }}>
-          ✅ {actionMessage}
+      {/* Pending Hold Action Banner */}
+      {heldCount > 0 && activeHeldTicket && (
+        <div
+          style={{
+            background: '#fffbeb',
+            border: '1px solid #fde68a',
+            borderRadius: '12px',
+            padding: '1.25rem 1.5rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span style={{ fontSize: '1.5rem' }}>⏳</span>
+            <div>
+              <div style={{ fontWeight: 700, color: '#92400e', fontSize: '1rem' }}>
+                You have {heldCount} active ticket hold reserved!
+              </div>
+              <div style={{ color: '#b45309', fontSize: '0.875rem', marginTop: '0.15rem' }}>
+                "{activeHeldTicket.event?.title || 'Campus Event'}" is held for you. Complete your checkout before the timer expires.
+              </div>
+            </div>
+          </div>
+          <Link
+            to={`/checkout/${activeHeldTicket._id}`}
+            className="btn btn-primary"
+            style={{
+              padding: '0.55rem 1.25rem',
+              fontSize: '0.875rem',
+              textDecoration: 'none',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+            }}
+          >
+            <span>Complete Checkout</span>
+            <ArrowRightIcon />
+          </Link>
         </div>
       )}
 
-      {actionError && (
-        <div className="alert alert-danger" style={{ marginTop: '1rem', padding: '1rem', background: '#fee2e2', color: '#991b1b', borderRadius: '6px', border: '1px solid #fca5a5' }}>
-          ⚠️ {actionError}
-        </div>
-      )}
-
-      <section className="dashboard-content card" style={{ marginTop: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <div>
-            <h2>Browse Events</h2>
-            <p style={{ color: '#666', marginTop: '0.25rem' }}>
-              Discover upcoming conferences, workshops, and gatherings.
+      {/* Pass Wallet Hub Card */}
+      <section
+        className="card"
+        style={{
+          borderRadius: '14px',
+          border: '1px solid #e2e8f0',
+          padding: '2rem',
+          marginBottom: '2.5rem',
+          background: '#ffffff',
+          boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div style={{ maxWidth: '650px' }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#e0e7ff', color: '#4338ca', padding: '0.2rem 0.65rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', marginBottom: '0.65rem' }}>
+              <TicketIcon />
+              <span>Digital Campus Pass Wallet</span>
+            </div>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', margin: '0 0 0.45rem' }}>
+              My Tickets & University Credentials
+            </h2>
+            <p style={{ color: '#64748b', fontSize: '0.95rem', margin: 0, lineHeight: 1.6 }}>
+              {confirmedCount > 0
+                ? `You have ${confirmedCount} confirmed campus pass${confirmedCount > 1 ? 'es' : ''} ready for gate check-in, plus instant cancellation and refund options.`
+                : 'All your reserved campus passes, active ticket holds, and student identity details are managed in your dedicated wallet.'}
             </p>
           </div>
-          <Link to="/events" className="btn btn-primary" style={{ textDecoration: 'none' }}>
-            Explore All Events &rarr;
+
+          <div style={{ display: 'flex', gap: '0.85rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <Link
+              to="/profile"
+              className="btn btn-primary"
+              style={{
+                textDecoration: 'none',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.45rem',
+                padding: '0.75rem 1.5rem',
+                fontWeight: 700,
+              }}
+            >
+              <IdCardIcon />
+              <span>Manage Passes & Student ID →</span>
+            </Link>
+            <Link
+              to="/events"
+              className="btn btn-secondary"
+              style={{
+                textDecoration: 'none',
+                padding: '0.75rem 1.25rem',
+                fontWeight: 600,
+              }}
+            >
+              Browse Events
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Recommended Campus Events */}
+      <section
+        className="card"
+        style={{
+          borderRadius: '14px',
+          border: '1px solid #e2e8f0',
+          padding: '2rem',
+          background: '#ffffff',
+          boxShadow: '0 1px 3px rgba(15, 23, 42, 0.05)',
+        }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.75rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: '#0f172a', margin: 0 }}>
+              Upcoming PES Campus Events
+            </h2>
+            <p style={{ color: '#64748b', marginTop: '0.25rem', fontSize: '0.925rem' }}>
+              Explore upcoming hackathons at PESU 52, culturals at GJBC & Amphitheatre, and Aatmatrisha 2026.
+            </p>
+          </div>
+          <Link to="/events" className="btn btn-secondary" style={{ textDecoration: 'none', fontWeight: 600 }}>
+            Explore All Events →
           </Link>
         </div>
 
-        <div style={{ marginTop: '1.5rem' }}>
+        <div>
           {loading ? (
-            <p style={{ color: '#64748b' }}>Loading upcoming events...</p>
+            <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+              <div className="spinner-ring" style={{ margin: '0 auto 1rem' }}></div>
+              <p style={{ color: '#64748b' }}>Discovering upcoming campus events...</p>
+            </div>
           ) : featuredEvents.length > 0 ? (
             <div className="event-grid" style={{ marginBottom: 0 }}>
               {featuredEvents.map((evt) => (
@@ -148,103 +303,6 @@ const AttendeeDashboard = () => {
             </div>
           )}
         </div>
-      </section>
-
-      <section className="dashboard-content card" style={{ marginTop: '1.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
-          <div>
-            <h2>My Tickets & Bookings (FR-07)</h2>
-            <p style={{ color: '#666', marginTop: '0.25rem' }}>
-              Manage your booked tickets, view confirmation details, or cancel eligible tickets with instant refunds.
-            </p>
-          </div>
-          <button onClick={fetchTickets} className="btn" style={{ border: '1px solid #cbd5e1', background: '#fff', fontSize: '0.9rem' }}>
-            🔄 Refresh Tickets
-          </button>
-        </div>
-
-        {ticketsLoading ? (
-          <p style={{ color: '#64748b' }}>Loading your tickets...</p>
-        ) : tickets.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {tickets.map((t) => {
-              const eventDate = t.event?.date ? new Date(t.event.date).toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric'
-              }) : 'N/A';
-              const isConfirmed = t.status === 'confirmed';
-              const isPast = t.event?.date ? new Date(t.event.date) < new Date() : false;
-
-              return (
-                <div
-                  key={t._id}
-                  style={{
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '8px',
-                    padding: '1.25rem',
-                    background: '#f8fafc',
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '1rem',
-                  }}
-                >
-                  <div style={{ flex: '1 1 300px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      <h3 style={{ margin: 0, fontSize: '1.15rem' }}>{t.event?.title || 'Unknown Event'}</h3>
-                      {getStatusBadge(t.status)}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: '#475569', display: 'flex', flexWrap: 'wrap', gap: '1rem' }}>
-                      <span>📅 {eventDate} {t.event?.time ? `• ${t.event.time}` : ''}</span>
-                      <span>📍 {t.event?.venue || 'TBA'}</span>
-                      <span>🎟️ {t.quantity} Seat{t.quantity > 1 ? 's' : ''}</span>
-                      <span>💵 $${Number(t.totalAmount || 0).toFixed(2)}</span>
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '0.35rem' }}>
-                      Ticket ID: <code>{t.ticketId || t._id}</code>
-                      {t.refundId && <span style={{ marginLeft: '1rem' }}>Refund ID: <code>{t.refundId}</code></span>}
-                    </div>
-                  </div>
-
-                  <div>
-                    {isConfirmed && !isPast && (
-                      <button
-                        onClick={() => handleCancelTicket(t)}
-                        disabled={cancelingId === t._id}
-                        className="btn btn-outline-danger"
-                        style={{
-                          borderColor: '#ef4444',
-                          color: '#ef4444',
-                          padding: '0.5rem 1rem',
-                          fontSize: '0.9rem',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                        }}
-                      >
-                        {cancelingId === t._id ? 'Canceling...' : 'Cancel & Refund Ticket'}
-                      </button>
-                    )}
-                    {(!isConfirmed || isPast) && (
-                      <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>
-                        {isPast ? 'Event Concluded' : 'Not eligible for cancellation'}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="placeholder-box" style={{ padding: '2rem', textAlign: 'center', color: '#888', background: '#f8fafc', borderRadius: '8px' }}>
-            <p>You have not registered for any events yet.</p>
-            <p style={{ marginTop: '0.5rem' }}>
-              Browse the catalog above to find and register for an event!
-            </p>
-          </div>
-        )}
       </section>
     </div>
   );

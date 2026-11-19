@@ -46,7 +46,7 @@ export const releaseExpiredHoldsInternal = async () => {
  */
 export const createHold = async (req, res, next) => {
   try {
-    const { eventId, quantity, contactName, contactEmail, contactPhone } = req.body;
+    const { eventId, quantity, contactName, contactEmail, contactPhone, contactSrn } = req.body;
 
     if (!eventId || !mongoose.Types.ObjectId.isValid(eventId)) {
       return res.status(400).json({
@@ -142,6 +142,8 @@ export const createHold = async (req, res, next) => {
     }
 
     const holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    const unitPrice = req.body.tierPrice !== undefined && req.body.tierPrice !== null ? Number(req.body.tierPrice) : (event.price || 0);
+    const totalAmount = unitPrice * qty;
 
     let ticket;
     try {
@@ -149,11 +151,16 @@ export const createHold = async (req, res, next) => {
         event: eventId,
         user: req.user?._id || req.user?.id,
         quantity: qty,
+        unitPrice,
+        totalAmount,
+        tierName: req.body.tierName || 'General Admission',
+        seatingLevel: req.body.seatingLevel || '',
         status: 'held',
         holdExpiresAt,
         contactName: contactName || (req.user ? req.user.name : ''),
         contactEmail: contactEmail || (req.user ? req.user.email : ''),
         contactPhone: contactPhone || '',
+        contactSrn: contactSrn || '',
       });
     } catch (createError) {
       await Event.findByIdAndUpdate(eventId, {
@@ -257,7 +264,8 @@ export const createHoldAtomic = async (req, res, next) => {
       }
 
       const holdExpiresAt = new Date(Date.now() + 10 * 60 * 1000);
-      const totalAmount = (event.price || 0) * qty;
+      const unitPrice = req.body.tierPrice !== undefined && req.body.tierPrice !== null ? Number(req.body.tierPrice) : (event.price || 0);
+      const totalAmount = unitPrice * qty;
 
       const [ticket] = await Ticket.create(
         [
@@ -265,13 +273,16 @@ export const createHoldAtomic = async (req, res, next) => {
             event: eventId,
             user: userId,
             quantity: qty,
-            unitPrice: event.price || 0,
+            unitPrice,
             totalAmount,
+            tierName: req.body.tierName || 'General Admission',
+            seatingLevel: req.body.seatingLevel || '',
             status: 'held',
             holdExpiresAt,
             contactName: customerInfo?.name || req.user?.name || '',
             contactEmail: customerInfo?.email || req.user?.email || '',
             contactPhone: customerInfo?.phone || '',
+            contactSrn: customerInfo?.srn || req.body?.contactSrn || '',
           },
         ],
         { session }
@@ -341,6 +352,10 @@ export const confirmTicketAtomic = async (req, res, next) => {
         throw expiredError;
       }
 
+      const rawCardLast4 = req.body?.cardLast4 || '1234';
+      const maskedCardNumber = req.body?.maskedCardNumber || `**** **** **** ${rawCardLast4}`;
+      const token = req.body?.token || `tok_pes_${uuidv4().substring(0, 10)}`;
+
       const paymentIntentId = `PAY-${uuidv4().replace(/-/g, '').substring(0, 16).toUpperCase()}`;
 
       const [payment] = await Payment.create(
@@ -350,9 +365,14 @@ export const confirmTicketAtomic = async (req, res, next) => {
             user: ticket.user,
             event: ticket.event,
             amount: ticket.totalAmount || 0,
-            currency: 'USD',
-            paymentMethod,
+            currency: 'INR',
+            provider: 'MockINRGateway',
+            paymentMethod: paymentMethod || 'credit_card',
             transactionId: paymentIntentId,
+            token,
+            cardLast4: rawCardLast4,
+            cardBrand: 'Visa',
+            maskedCardNumber: maskedCardNumber,
             status: 'completed',
           },
         ],
@@ -372,6 +392,8 @@ export const confirmTicketAtomic = async (req, res, next) => {
       ticket.ticketId = generatedTicketId;
       ticket.status = 'confirmed';
       ticket.payment = payment._id;
+      ticket.cardLast4 = rawCardLast4;
+      ticket.maskedCardNumber = maskedCardNumber;
       ticket.confirmedAt = new Date();
 
       await ticket.save({ session });
@@ -644,7 +666,7 @@ export const cancelHold = async (req, res, next) => {
 /**
  * Helper to update contact info on a ticket hold (FR-05)
  */
-export const saveContactInfo = async (ticketHoldId, contactName, contactEmail, contactPhone) => {
+export const saveContactInfo = async (ticketHoldId, contactName, contactEmail, contactPhone, contactSrn) => {
   let ticket = null;
 
   if (mongoose.Types.ObjectId.isValid(ticketHoldId)) {
@@ -671,6 +693,9 @@ export const saveContactInfo = async (ticketHoldId, contactName, contactEmail, c
   ticket.contactName = contactName ? contactName.trim() : ticket.contactName;
   ticket.contactEmail = contactEmail ? contactEmail.trim().toLowerCase() : ticket.contactEmail;
   ticket.contactPhone = contactPhone ? contactPhone.trim() : ticket.contactPhone;
+  if (contactSrn !== undefined) {
+    ticket.contactSrn = contactSrn ? contactSrn.trim().toUpperCase() : ticket.contactSrn;
+  }
 
   return await ticket.save();
 };
@@ -682,13 +707,13 @@ export const saveContactInfo = async (ticketHoldId, contactName, contactEmail, c
  */
 export const updateContactDetails = async (req, res, next) => {
   if (typeof req === 'string' || (req && !req.headers && !req.params && !req.body && arguments.length > 1)) {
-    const [ticketHoldId, contactName, contactEmail, contactPhone] = arguments;
-    return await saveContactInfo(ticketHoldId, contactName, contactEmail, contactPhone);
+    const [ticketHoldId, contactName, contactEmail, contactPhone, contactSrn] = arguments;
+    return await saveContactInfo(ticketHoldId, contactName, contactEmail, contactPhone, contactSrn);
   }
 
   try {
     const ticketHoldId = req.params?.id || req.body?.ticketHoldId || req.body?.id;
-    const { contactName, contactEmail, contactPhone } = req.body || {};
+    const { contactName, contactEmail, contactPhone, contactSrn } = req.body || {};
 
     if (!ticketHoldId) {
       return res.status(400).json({
@@ -701,7 +726,8 @@ export const updateContactDetails = async (req, res, next) => {
       ticketHoldId,
       contactName,
       contactEmail,
-      contactPhone
+      contactPhone,
+      contactSrn
     );
 
     return res.status(200).json({

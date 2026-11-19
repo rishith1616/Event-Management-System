@@ -79,7 +79,7 @@ async function runTests() {
     const event1 = await Event.create({
       title: 'Tech Conference 2026',
       description: 'Annual flagship technology conference',
-      date: new Date('2026-11-15'),
+      date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
       time: '09:00 AM',
       venue: 'Metropolitan Convention Center',
       capacity: 50,

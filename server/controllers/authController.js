@@ -114,8 +114,12 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // Check for user
-    const user = await User.findOne({ email: email.toLowerCase() });
+    // Check for user (supports both attendee@eventms.com alias and primary jayanthkumar08p@gmail.com)
+    let searchEmail = email.toLowerCase().trim();
+    let user = await User.findOne({ email: searchEmail });
+    if (!user && searchEmail === 'attendee@eventms.com') {
+      user = await User.findOne({ email: 'jayanthkumar08p@gmail.com' });
+    }
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -169,6 +173,56 @@ export const getMe = async (req, res, next) => {
     res.status(200).json({
       success: true,
       user,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Update current user profile (name, phone, srn, email)
+ * @route   PUT /api/auth/profile
+ * @access  Private
+ */
+export const updateProfile = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    const { name, phone, srn, email } = req.body;
+    if (name) user.name = name.trim();
+    if (phone) user.phone = phone.trim();
+    if (srn) user.srn = srn.trim().toUpperCase();
+    if (email && email.toLowerCase() !== user.email) {
+      const existing = await User.findOne({ email: email.toLowerCase() });
+      if (existing && existing._id.toString() !== user._id.toString()) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is already in use by another account',
+        });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        srn: user.srn,
+        phone: user.phone,
+        createdAt: user.createdAt,
+      },
     });
   } catch (error) {
     next(error);

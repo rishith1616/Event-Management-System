@@ -14,10 +14,29 @@ const paymentSchema = new mongoose.Schema(
       ref: 'User',
       required: false,
     },
+    user: {
+      type: mongoose.Schema.Types.Mixed,
+      ref: 'User',
+      required: false,
+    },
     eventId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Event',
       required: false,
+    },
+    event: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Event',
+      required: false,
+    },
+    ticket: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Ticket',
+      required: false,
+    },
+    paymentMethod: {
+      type: String,
+      default: 'credit_card',
     },
     amount: {
       type: Number,
@@ -66,7 +85,7 @@ const paymentSchema = new mongoose.Schema(
     },
     cardLast4: {
       type: String,
-      default: '4242',
+      default: '1234',
     },
     cardBrand: {
       type: String,
@@ -74,7 +93,7 @@ const paymentSchema = new mongoose.Schema(
     },
     maskedCardNumber: {
       type: String,
-      default: '•••• •••• •••• 4242',
+      default: '**** **** **** 1234',
     },
     metadata: {
       type: mongoose.Schema.Types.Mixed,
@@ -87,10 +106,15 @@ const paymentSchema = new mongoose.Schema(
 );
 
 
-// NFR-02 Pre-save hook: Enforce PCI-DSS compliance by rejecting raw card numbers
+// NFR-02 Pre-save hook: Enforce PCI-DSS compliance and sync identifiers
 paymentSchema.pre('save', function (next) {
+  if (this.event && !this.eventId) this.eventId = this.event;
+  if (this.eventId && !this.event) this.event = this.eventId;
+  if (this.user && !this.userId) this.userId = this.user;
+  if (this.userId && !this.user) this.user = this.userId;
+
   if (!this.maskedCardNumber && this.cardLast4) {
-    this.maskedCardNumber = `•••• •••• •••• ${this.cardLast4}`;
+    this.maskedCardNumber = `**** **** **** ${this.cardLast4}`;
   }
 
   // Scan all serialized fields to ensure no raw 13-19 digit card numbers exist in storage
