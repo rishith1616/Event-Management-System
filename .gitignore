@@ -24,3 +24,7 @@ npm-debug.log*
 # Office temporary lock files
 ~$*
 
+# Report build directory
+.build_reports/
+
+
